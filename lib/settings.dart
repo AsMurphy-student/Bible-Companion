@@ -1,3 +1,4 @@
+import 'package:biblereader/settingsComponents/translationdropdown.dart';
 import 'package:flutter/material.dart';
 
 class PageSettings extends StatefulWidget {
@@ -14,7 +15,11 @@ class _PageSettingsState extends State<PageSettings> {
       width: double.infinity,
       height: double.infinity,
       color: Colors.purple[50],
-      child: Center(child: Text("Settings")),
+      child: Center(child: Column(
+        children: [
+          Translationdropdown(),
+        ],
+      )),
     );
   }
 }
