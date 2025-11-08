@@ -41,6 +41,9 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getInt('currentBook') != null) {
         currentBook = prefs.getInt('currentBook')!;
       }
+      if (prefs.getInt('currentChapter') != null) {
+        currentChapter = prefs.getInt('currentChapter')!;
+      }
     });
 
     getBooks(
@@ -66,6 +69,10 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         bookIDs = data.map((element) => element['id'].toString()).toList();
+        bookChapterCounts = data
+            .map((element) => int.parse(element['numberOfChapters'].toString()))
+            .toList();
+        print(bookChapterCounts);
       });
     } else {
       print("Theres a problem: ${response.statusCode}");
@@ -80,7 +87,9 @@ class _HomePageState extends State<HomePage> {
 
   int currentBottomTab = 0;
   int currentBook = 0;
-  late List<String> bookIDs;
+  int currentChapter = 0;
+  List<String> bookIDs = [];
+  List<int> bookChapterCounts = [];
 
   List<Widget> get bottomNavScreens => [
     PageHome(chapterTitle: bookIDs.isNotEmpty ? bookIDs[currentBook] : 'GEN'),
@@ -92,7 +101,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${bookIDs.isNotEmpty ? bookIDs[currentBook] : 'Fetching IDs'} chapter (ex. John 5)",
+          "${bookIDs.isNotEmpty ? bookIDs[currentBook] : 'Fetching IDs'} ${currentChapter + 1}",
         ),
         leading: DropdownButton<String>(
           value: bookIDs.isNotEmpty ? bookIDs[currentBook] : 'GEN',
@@ -112,8 +121,9 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.arrow_back),
             onPressed: () {
               setState(() {
-                if (currentBook > 0) {
-                  currentBook -= 1;
+                if (currentChapter > 0) {
+                  currentChapter -= 1;
+                  saveValue('currentChapter', currentChapter);
                 }
               });
             },
@@ -122,8 +132,12 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.arrow_forward),
             onPressed: () {
               setState(() {
-                if (currentBook <= 66) {
-                  currentBook += 1;
+                if (currentChapter <
+                    (bookChapterCounts.isNotEmpty
+                        ? bookChapterCounts[currentBook] - 1
+                        : 1)) {
+                  currentChapter += 1;
+                  saveValue('currentChapter', currentChapter);
                 }
               });
             },
