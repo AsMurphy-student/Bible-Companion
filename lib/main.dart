@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:biblereader/functions/verses.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -89,58 +90,8 @@ class _HomePageState extends State<HomePage> {
       var jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['chapter']['content'];
 
-      List<Widget> newWidgets = [];
       setState(() {
-        for (int i = 0; i < data.length; i++) {
-          if (data[i]['type'] == 'heading') {
-            if (i > 0) {
-              newWidgets.add(SizedBox(height: 30));
-            }
-            newWidgets.add(
-              Text(
-                data[i]['content'].whereType<String>().join(' '),
-                style: TextStyle(fontSize: 30),
-              ),
-            );
-            if (i < data.length - 1) {
-              newWidgets.add(SizedBox(height: 30));
-            }
-          } else if (data[i]['type'] == 'verse') {
-            String verse = '';
-            for (int v = 0; v < data[i]['content'].length; v++) {
-              if (data[i]['content'][v] is String) {
-                if (v > 0) {
-                  verse += " ${data[i]['content'][v].toString()}";
-                } else {
-                  verse += data[i]['content'][v].toString();
-                }
-              } else {
-                verse += '\n';
-              }
-            }
-
-            newWidgets.add(
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: data[i]['number'].toString(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        textBaseline: TextBaseline.ideographic,
-                      ),
-                    ),
-                    WidgetSpan(child: SizedBox(width: 4)),
-                    TextSpan(text: verse, style: TextStyle(fontSize: 18)),
-                  ],
-                ),
-              ),
-              // Text(data[i]['content'].whereType<String>().join(' ')),
-            );
-          }
-        }
-        chapterWidgets = newWidgets;
-        print(chapterWidgets);
+        chapterWidgets = getContentWidgets(data);
       });
 
       // setState(() {
