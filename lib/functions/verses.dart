@@ -19,20 +19,30 @@ List<Widget> getContentWidgets(List<dynamic> data) {
     } else if (data[i]['type'] == 'verse') {
       String verse = '';
       for (int v = 0; v < data[i]['content'].length; v++) {
+        // if (data[i]['content'][v] is String) {
+          // if (v > 0 && data[i]['content'][v - 1] is String) {
+          //   verse += " ${data[i]['content'][v].toString()}";
+          // } else {
+          //   verse += data[i]['content'][v].toString();
+          // }
+        // } else if (data[i]['content'][v]['text'] is String) {
+        //   if (v > 0 && data[i]['content'][v - 1]['text'] is String) {
+        //     verse += " ${data[i]['content'][v]['text'].toString()}";
+        //   } else {
+        //     verse += data[i]['content'][v]['text'].toString();
+        //   }
+        // } else if (data[i]['content'][v]['lineBreak'] is bool) {
+        //   verse += '\n';
+        // }
         if (data[i]['content'][v] is String) {
           if (v > 0 && data[i]['content'][v - 1] is String) {
             verse += " ${data[i]['content'][v].toString()}";
           } else {
             verse += data[i]['content'][v].toString();
           }
-        } else if (data[i]['content'][v]['text'] is String) {
-          if (v > 0 && data[i]['content'][v - 1]['text'] is String) {
-            verse += " ${data[i]['content'][v]['text'].toString()}";
-          } else {
-            verse += data[i]['content'][v]['text'].toString();
-          }
-        } else {
-          verse += '\n';
+        } else if (data[i]['content'][v]['text'] != null &&
+            data[i]['content'][v]['text'] is String) {
+          verse += data[i]['content'][v]['text'];
         }
       }
 
