@@ -41,7 +41,6 @@ class _PageHomeState extends State<PageHome> {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.red[50],
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(

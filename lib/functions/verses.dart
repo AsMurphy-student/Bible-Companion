@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-List<Widget> getContentWidgets(List<dynamic> data) {
+List<Widget> getContentWidgets(List<dynamic> data, BuildContext context) {
   List<Widget> newWidgets = [];
   for (int i = 0; i < data.length; i++) {
     if (data[i]['type'] == 'heading') {
@@ -10,7 +10,7 @@ List<Widget> getContentWidgets(List<dynamic> data) {
       newWidgets.add(
         Text(
           data[i]['content'].whereType<String>().join(' '),
-          style: TextStyle(fontSize: 30, color: Colors.black),
+          style: TextStyle(fontSize: 30),
         ),
       );
       if (i < data.length - 1) {
@@ -20,11 +20,11 @@ List<Widget> getContentWidgets(List<dynamic> data) {
       String verse = '';
       for (int v = 0; v < data[i]['content'].length; v++) {
         // if (data[i]['content'][v] is String) {
-          // if (v > 0 && data[i]['content'][v - 1] is String) {
-          //   verse += " ${data[i]['content'][v].toString()}";
-          // } else {
-          //   verse += data[i]['content'][v].toString();
-          // }
+        // if (v > 0 && data[i]['content'][v - 1] is String) {
+        //   verse += " ${data[i]['content'][v].toString()}";
+        // } else {
+        //   verse += data[i]['content'][v].toString();
+        // }
         // } else if (data[i]['content'][v]['text'] is String) {
         //   if (v > 0 && data[i]['content'][v - 1]['text'] is String) {
         //     verse += " ${data[i]['content'][v]['text'].toString()}";
@@ -52,19 +52,25 @@ List<Widget> getContentWidgets(List<dynamic> data) {
             children: [
               TextSpan(
                 text: data[i]['number'].toString(),
-                style: TextStyle(
+                // style: TextStyle(
+                //   fontSize: 12,
+                //   textBaseline: TextBaseline.ideographic,
+                // ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontSize: 12,
                   textBaseline: TextBaseline.ideographic,
-                  color: Colors.black,
                 ),
               ),
               WidgetSpan(child: SizedBox(width: 4)),
               TextSpan(
                 text: verse,
-                style: TextStyle(
+                // style: TextStyle(
+                //   fontSize: 18,
+                //   height: 1.5,
+                // ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontSize: 18,
-                  height: 1.5,
-                  color: Colors.black,
+                  height: 2.0,
                 ),
               ),
             ],

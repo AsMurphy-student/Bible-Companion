@@ -16,8 +16,28 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomePage(),
+    return MaterialApp(
+      home: const HomePage(),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+        ),
+        textTheme: TextTheme(
+          bodySmall: TextStyle(fontSize: 20, color: Colors.black),
+        ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
+        ),
+        textTheme: TextTheme(
+          bodySmall: TextStyle(fontSize: 20, color: Colors.white),
+        ),
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -91,7 +111,7 @@ class _HomePageState extends State<HomePage> {
       List<dynamic> data = jsonResponse['chapter']['content'];
 
       setState(() {
-        chapterWidgets = getContentWidgets(data);
+        chapterWidgets = getContentWidgets(data, context);
       });
 
       // setState(() {
@@ -127,7 +147,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> get bottomNavScreens => [
     PageHome(chapterWidgets: chapterWidgets),
-    PageSettings(getBooksAndChapters: getBooks,),
+    PageSettings(getBooksAndChapters: getBooks),
   ];
 
   @override
@@ -192,12 +212,12 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: "Bible",
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: "Settings",
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         ],
         onTap: (value) {
