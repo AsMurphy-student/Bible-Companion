@@ -65,6 +65,11 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getInt('currentChapter') != null) {
         currentChapter = prefs.getInt('currentChapter')!;
       }
+      // if (prefs.getString('bibleData') != null) {
+      //   bibleData = json.decode(prefs.getString('bibleData')!);
+      // } else {
+      //   getBooks();
+      // }
     });
 
     // getBooks();
@@ -100,12 +105,9 @@ class _HomePageState extends State<HomePage> {
         for (int c = 0; c < bookChapterCounts[b]; c++) {
           bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
         }
-        if (b == 0) {
-          for (int i = 0; i < bookData.length; i++) {
-            print(bookData[i]);
-          }
-        }
+        bibleData[bookIDs[b]] = bookData;
       }
+      // saveValue('bibleData', json.encode(bibleData));
     } else {
       print("Theres a problem: ${response.statusCode}");
     }
