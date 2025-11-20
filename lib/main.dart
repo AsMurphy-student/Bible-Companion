@@ -59,8 +59,8 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getInt('currentBottomTab') != null) {
         currentBottomTab = prefs.getInt('currentBottomTab')!;
       }
-      if (prefs.getInt('currentBook') != null) {
-        currentBook = prefs.getInt('currentBook')!;
+      if (prefs.getString('currentBook') != null) {
+        currentBook = prefs.getString('currentBook')!;
       }
       if (prefs.getInt('currentChapter') != null) {
         currentChapter = prefs.getInt('currentChapter')!;
@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
       // }
     });
 
-    // getBooks();
+    getBooks();
   }
 
   Future<void> saveValue(String key, dynamic value) async {
@@ -107,6 +107,9 @@ class _HomePageState extends State<HomePage> {
         }
         bibleData[bookIDs[b]] = bookData;
       }
+      setState(() {
+        bibleData = bibleData;
+      });
       // saveValue('bibleData', json.encode(bibleData));
     } else {
       print("Theres a problem: ${response.statusCode}");
@@ -140,7 +143,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   int currentBottomTab = 0;
-  int currentBook = 0;
+  String currentBook = 'GEN';
   int currentChapter = 0;
   // List<String> bookIDs = [];
   // List<int> bookChapterCounts = [];
@@ -157,26 +160,25 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          // "${bookIDs.isNotEmpty ? bookIDs[currentBook] : 'Fetching IDs'} ${currentChapter + 1}",
-          "Testing",
+          "${bibleData.isNotEmpty ? currentBook : 'Fetching IDs'} ${currentChapter + 1}",
         ),
         // leading: DropdownButton<String>(
         //   isExpanded: true,
-
-        //   // value: bookIDs.isNotEmpty ? bookIDs[currentBook] : 'GEN',
-        //   value: 'GEN',
-
+        //   value: bibleData.isNotEmpty ? currentBook : 'GEN',
         //   icon: Icon(Icons.arrow_downward),
         //   onChanged: (String? newValue) {
         //     setState(() {
-        //       // currentBook = bookIDs.indexOf(newValue!);
-        //       // saveValue('currentBook', bookIDs.indexOf(newValue));
+        //       currentBook = newValue!;
+        //       saveValue('currentBook', newValue);
         //       currentChapter = 0;
         //       saveValue('currentChapter', currentChapter);
-        //       getChapterData();
+        //       chapterWidgets = getContentWidgets(
+        //         bibleData[currentBook]?[currentChapter],
+        //         context,
+        //       );
         //     });
         //   },
-        //   items: bookIDs.map<DropdownMenuItem<String>>((String value) {
+        //   items: bibleData.keys.map<DropdownMenuItem<String>>((String value) {
         //     return DropdownMenuItem<String>(value: value, child: Text(value));
         //   }).toList(),
         // ),
