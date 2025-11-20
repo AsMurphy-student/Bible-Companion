@@ -79,25 +79,31 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> getBooks() async {
-    String fetchURL =
-        'https://bible.helloao.org/api/${prefs.getString('chosenTranslation') ?? "BSB"}/books.json';
+    String translation = prefs.getString('chosenTranslation') ?? "BSB";
+    String fetchURL = 'https://bible.helloao.org/api/$translation/books.json';
     // Get response and assign variables accordingly
     var response = await http.get(Uri.parse(fetchURL));
 
     if (response.statusCode == 200) {
       var jsonResponse = jsonDecode(response.body);
-      List<dynamic> data = jsonResponse['books'];
+      List<dynamic> listOfBooks = jsonResponse['books'];
 
-      List<String> bookIDs = data
+      List<String> bookIDs = listOfBooks
           .map((element) => element['id'].toString())
           .toList();
-      List<int> bookChapterCounts = data
+      List<int> bookChapterCounts = listOfBooks
           .map((element) => int.parse(element['numberOfChapters'].toString()))
           .toList();
 
       for (int b = 0; b < bookIDs.length; b++) {
+        List<dynamic> bookData = [];
         for (int c = 0; c < bookChapterCounts[b]; c++) {
-          print('${bookIDs[b]}: ${c + 1}');
+          bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
+        }
+        if (b == 0) {
+          for (int i = 0; i < bookData.length; i++) {
+            print(bookData[i]);
+          }
         }
       }
     } else {
