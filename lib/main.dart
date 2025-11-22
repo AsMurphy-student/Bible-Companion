@@ -85,7 +85,10 @@ class _HomePageState extends State<HomePage> {
           }
           setState(() {
             bibleData = bibleData;
-            chapterWidgets = getContentWidgets(bibleData[currentBook]?[currentChapter], context);
+            chapterWidgets = getContentWidgets(
+              bibleData[currentBook]?[currentChapter],
+              context,
+            );
           });
         } catch (e) {
           print('Error decoding JSON: $e');
@@ -140,6 +143,16 @@ class _HomePageState extends State<HomePage> {
           bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
         }
         bibleData[bookIDs[b]] = bookData;
+        if (bookIDs[b] == currentBook) {
+          print('remove splash');
+          setState(() {
+            chapterWidgets = getContentWidgets(
+              bibleData[currentBook]?[currentChapter],
+              context.mounted ? context : context,
+            );
+          });
+          FlutterNativeSplash.remove();
+        }
         print('Got ${bookIDs[b]}');
       }
       setState(() {
