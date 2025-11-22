@@ -89,6 +89,7 @@ class _HomePageState extends State<HomePage> {
               bibleData[currentBook]?[currentChapter],
               context,
             );
+            fetchingProgress = 1;
           });
         } catch (e) {
           print('Error decoding JSON: $e');
@@ -153,7 +154,10 @@ class _HomePageState extends State<HomePage> {
           });
           FlutterNativeSplash.remove();
         }
-        print('Got ${bookIDs[b]}');
+        setState(() {
+          fetchingProgress = bibleData.length / bookIDs.length;
+        });
+        // print('Got ${bookIDs[b]}');
       }
       setState(() {
         bibleData = bibleData;
@@ -206,6 +210,7 @@ class _HomePageState extends State<HomePage> {
     initPrefs();
   }
 
+  double fetchingProgress = 0;
   int currentBottomTab = 0;
   String currentBook = 'GEN';
   int currentChapter = 0;
@@ -279,6 +284,31 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(4.0),
+          child: Visibility(
+            visible: fetchingProgress < 1,
+            child: SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.9,
+              child: Stack(
+                alignment: AlignmentDirectional.center,
+                children: [
+                  LinearProgressIndicator(
+                    backgroundColor: Colors.grey,
+                    borderRadius: BorderRadius.circular(25),
+                    color: Colors.greenAccent,
+                    minHeight: 20,
+                    value: fetchingProgress,
+                  ),
+                  Text(
+                    'Fetching Rest of Bible Data',
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: IndexedStack(index: currentBottomTab, children: bottomNavScreens),
       bottomNavigationBar: BottomNavigationBar(
