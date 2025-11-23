@@ -26,7 +26,7 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: Color(0x0fd45f2d),
           brightness: Brightness.light,
         ),
         textTheme: TextTheme(
@@ -36,7 +36,7 @@ class MainApp extends StatelessWidget {
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: Color(0x0fd45f2d),
           brightness: Brightness.dark,
         ),
         textTheme: TextTheme(
