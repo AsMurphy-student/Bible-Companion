@@ -15,11 +15,6 @@ class _PageHomeState extends State<PageHome> {
   late SharedPreferences prefs;
   Future<void> initPrefs() async {
     prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // if (prefs.getInt('currentBottomTab') != null) {
-      //   currentBottomTab = prefs.getInt('currentBottomTab')!;
-      // }
-    });
   }
 
   Future<void> saveValue(String key, dynamic value) async {

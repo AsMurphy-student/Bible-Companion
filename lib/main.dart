@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:biblereader/checklist.dart';
 import 'package:biblereader/functions/verses.dart';
+import 'package:biblereader/notes.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -214,13 +216,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   double fetchingProgress = 0;
-  int currentBottomTab = 0;
+  int currentBottomTab = 2;
   String currentBook = 'GEN';
   int currentChapter = 0;
   var bibleData = <String, List<dynamic>>{};
   List<Widget> chapterWidgets = [];
 
   List<Widget> get bottomNavScreens => [
+    PageNotes(),
+    PageChecklist(),
+    PageHome(chapterWidgets: chapterWidgets),
     PageHome(chapterWidgets: chapterWidgets),
     PageSettings(getBooksAndChapters: getBooks),
   ];
@@ -319,14 +324,29 @@ class _HomePageState extends State<HomePage> {
         currentIndex: currentBottomTab,
         items: [
           BottomNavigationBarItem(
+            icon: Icon(Icons.notes),
+            label: "Reflection",
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.lightbulb),
+            label: "Reflection",
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: "Bible",
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: "Commentary",
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: "Settings",
-            backgroundColor: Theme.of(context).colorScheme.secondary,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         ],
         onTap: (value) {
