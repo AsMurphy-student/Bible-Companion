@@ -72,6 +72,9 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getInt('currentChapter') != null) {
         currentChapter = prefs.getInt('currentChapter')!;
       }
+      if (prefs.getStringList('chapterNames') != null) {
+        chapterNames = prefs.getStringList('chapterNames')!;
+      }
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
@@ -119,6 +122,8 @@ class _HomePageState extends State<HomePage> {
       await prefs.setString(key, value);
     } else if (value is int) {
       await prefs.setInt(key, value);
+    } else if (value is List<String>) {
+      await prefs.setStringList(key, value);
     }
   }
 
@@ -142,6 +147,10 @@ class _HomePageState extends State<HomePage> {
         List<int> bookChapterCounts = listOfBooks
             .map((element) => int.parse(element['numberOfChapters'].toString()))
             .toList();
+        chapterNames = listOfBooks
+            .map((element) => element['name'].toString())
+            .toList();
+        saveValue('chapterNames', chapterNames);
 
         for (int b = 0; b < bookIDs.length; b++) {
           List<dynamic> bookData = [];
@@ -220,6 +229,7 @@ class _HomePageState extends State<HomePage> {
   String currentBook = 'GEN';
   int currentChapter = 0;
   var bibleData = <String, List<dynamic>>{};
+  List<String> chapterNames = [];
   List<Widget> chapterWidgets = [];
 
   List<Widget> get bottomNavScreens => [
@@ -235,7 +245,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${bibleData.isNotEmpty ? currentBook : 'Fetching IDs'} ${currentChapter + 1}",
+          "${bibleData.isNotEmpty && chapterNames.isNotEmpty ? chapterNames[bibleData.keys.toList().indexOf(currentBook)] : 'Fetching IDs'} ${currentChapter + 1}",
         ),
         // leading: DropdownButton<String>(
         //   isExpanded: true,
@@ -327,7 +337,7 @@ class _HomePageState extends State<HomePage> {
           itemCount: bibleData.keys.length, // number of options
           itemBuilder: (context, index) {
             return ListTile(
-              title: Text(bibleData.keys.elementAt(index)),
+              title: Text(chapterNames[index]),
               onTap: () {
                 setState(() {
                   currentBook = bibleData.keys.elementAt(index);
