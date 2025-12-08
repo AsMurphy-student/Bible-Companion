@@ -237,26 +237,30 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           "${bibleData.isNotEmpty ? currentBook : 'Fetching IDs'} ${currentChapter + 1}",
         ),
-        leading: DropdownButton<String>(
-          isExpanded: true,
-          value: bibleData.isNotEmpty ? currentBook : 'GEN',
-          icon: Icon(Icons.arrow_downward),
-          onChanged: (String? newValue) {
-            setState(() {
-              currentBook = newValue!;
-              saveValue('currentBook', newValue);
-              currentChapter = 0;
-              saveValue('currentChapter', currentChapter);
-              chapterWidgets = getContentWidgets(
-                bibleData[currentBook]?[currentChapter],
-                context,
-              );
-            });
-          },
-          items: bibleData.keys.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-        ),
+        // leading: DropdownButton<String>(
+        //   isExpanded: true,
+        //   value: bibleData.isNotEmpty ? currentBook : 'GEN',
+        //   icon: Icon(Icons.arrow_downward),
+        //   onChanged: (String? newValue) {
+        // setState(() {
+        //   currentBook = newValue!;
+        //   saveValue('currentBook', newValue);
+        //   currentChapter = 0;
+        //   saveValue('currentChapter', currentChapter);
+        //   chapterWidgets = getContentWidgets(
+        //     bibleData[currentBook]?[currentChapter],
+        //     context,
+        //   );
+        // });
+        //   },
+        //   items: bibleData.keys.map<DropdownMenuItem<String>>((String value) {
+        //     return DropdownMenuItem<String>(value: value, child: Text(value));
+        //   }).toList(),
+        // ),
+        // leading: IconButton(
+        //     icon: Icon(Icons.menu),
+        //     onPressed: () => Scaffold.of(context).openDrawer(),
+        //   ),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.arrow_back),
@@ -316,6 +320,29 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView.builder(
+          itemCount: bibleData.keys.length, // number of options
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(bibleData.keys.elementAt(index)),
+              onTap: () {
+                setState(() {
+                  currentBook = bibleData.keys.elementAt(index);
+                  saveValue('currentBook', bibleData.keys.elementAt(index));
+                  currentChapter = 0;
+                  saveValue('currentChapter', currentChapter);
+                  chapterWidgets = getContentWidgets(
+                    bibleData[currentBook]?[currentChapter],
+                    context,
+                  );
+                  Navigator.pop(context);
+                });
+              },
+            );
+          },
         ),
       ),
       body: IndexedStack(index: currentBottomTab, children: bottomNavScreens),
