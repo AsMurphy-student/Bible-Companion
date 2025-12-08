@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
               bibleData[currentBook]?[currentChapter],
               context,
             );
-            fetchingProgress = 1;
+            bibleFetchingProgress = 1;
           });
         } catch (e) {
           print('Error decoding JSON: $e');
@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> getBooks() async {
     setState(() {
-      fetchingProgress = 0;
+      bibleFetchingProgress = 0;
     });
     String translation = prefs.getString('chosenTranslation') ?? "BSB";
     String fetchURL = 'https://bible.helloao.org/api/$translation/books.json';
@@ -169,7 +169,7 @@ class _HomePageState extends State<HomePage> {
             FlutterNativeSplash.remove();
           }
           setState(() {
-            fetchingProgress = bibleData.length / bookIDs.length;
+            bibleFetchingProgress = bibleData.length / bookIDs.length;
           });
           // print('Got ${bookIDs[b]}');
         }
@@ -218,17 +218,108 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> getCommentaryBooks() async {
+    setState(() {
+      commentaryFetchingProgress = 0;
+    });
+    // String translation = prefs.getString('chosenTranslation') ?? "BSB";
+    String fetchURL = 'https://bible.helloao.org/api/c/tyndale/books.json';
+    try {
+      // Get response and assign variables accordingly
+      var response = await http.get(Uri.parse(fetchURL));
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        List<dynamic> listOfBooks = jsonResponse['book'];
+
+        List<String> bookIDs = listOfBooks
+            .map((element) => element['id'].toString())
+            .toList();
+        List<int> bookChapterCounts = listOfBooks
+            .map((element) => int.parse(element['numberOfChapters'].toString()))
+            .toList();
+
+        for (int b = 0; b < bookIDs.length; b++) {
+          List<dynamic> bookData = [];
+          for (int c = 0; c < bookChapterCounts[b]; c++) {
+            bookData.add(
+              await getCommentaryChapterData('tyndale', bookIDs[b], c + 1),
+            );
+          }
+          bibleData[bookIDs[b]] = bookData;
+          if (bookIDs[b] == currentBook) {
+            print('remove splash');
+            setState(() {
+              chapterWidgets = getContentWidgets(
+                bibleData[currentBook]?[currentChapter],
+                context.mounted ? context : context,
+              );
+            });
+            FlutterNativeSplash.remove();
+          }
+          setState(() {
+            bibleFetchingProgress = bibleData.length / bookIDs.length;
+          });
+          // print('Got ${bookIDs[b]}');
+        }
+        setState(() {
+          bibleData = bibleData;
+        });
+        print('got books');
+        List<int> bytes = utf8.encode(json.encode(bibleData));
+        List<int> compressed = GZipEncoder().encode(bytes);
+        saveValue('bibleData', base64.encode(compressed));
+        print('saved bible');
+        chapterWidgets = getContentWidgets(
+          bibleData[currentBook]?[currentChapter],
+          context.mounted ? context : context,
+        );
+        print('set chapter widgets');
+        FlutterNativeSplash.remove();
+      } else {
+        print("Theres a problem: ${response.statusCode}");
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<List<dynamic>> getCommentaryChapterData(
+    String translation,
+    String bookID,
+    int chapter,
+  ) async {
+    try {
+      String fetchURL =
+          'https://bible.helloao.org/api/c/$translation/$bookID/$chapter.json';
+      // Get response and assign variables accordingly
+      var response = await http.get(Uri.parse(fetchURL));
+      if (response.statusCode != 200) {
+        print('error');
+      }
+      var jsonResponse = jsonDecode(response.body);
+      List<dynamic> data = jsonResponse['chapter'];
+
+      return data;
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     initPrefs();
   }
 
-  double fetchingProgress = 0;
+  double bibleFetchingProgress = 0;
+  double commentaryFetchingProgress = 0;
   int currentBottomTab = 2;
   String currentBook = 'GEN';
   int currentChapter = 0;
   var bibleData = <String, List<dynamic>>{};
+  var commentaryData = <String, List<dynamic>>{};
   List<String> chapterNames = [];
   List<Widget> chapterWidgets = [];
 
@@ -247,69 +338,10 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           "${bibleData.isNotEmpty && chapterNames.isNotEmpty ? chapterNames[bibleData.keys.toList().indexOf(currentBook)] : 'Fetching IDs'} ${currentChapter + 1}",
         ),
-        // leading: DropdownButton<String>(
-        //   isExpanded: true,
-        //   value: bibleData.isNotEmpty ? currentBook : 'GEN',
-        //   icon: Icon(Icons.arrow_downward),
-        //   onChanged: (String? newValue) {
-        // setState(() {
-        //   currentBook = newValue!;
-        //   saveValue('currentBook', newValue);
-        //   currentChapter = 0;
-        //   saveValue('currentChapter', currentChapter);
-        //   chapterWidgets = getContentWidgets(
-        //     bibleData[currentBook]?[currentChapter],
-        //     context,
-        //   );
-        // });
-        //   },
-        //   items: bibleData.keys.map<DropdownMenuItem<String>>((String value) {
-        //     return DropdownMenuItem<String>(value: value, child: Text(value));
-        //   }).toList(),
-        // ),
-        // leading: IconButton(
-        //     icon: Icon(Icons.menu),
-        //     onPressed: () => Scaffold.of(context).openDrawer(),
-        //   ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              setState(() {
-                if (currentChapter > 0) {
-                  currentChapter -= 1;
-                  saveValue('currentChapter', currentChapter);
-                  chapterWidgets = getContentWidgets(
-                    bibleData[currentBook]?[currentChapter],
-                    context,
-                  );
-                }
-              });
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.arrow_forward),
-            onPressed: () {
-              setState(() {
-                if (currentChapter <
-                    (bibleData.isNotEmpty
-                        ? bibleData[currentBook]!.length - 1
-                        : 1)) {
-                  currentChapter += 1;
-                  saveValue('currentChapter', currentChapter);
-                  chapterWidgets = getContentWidgets(
-                    bibleData[currentBook]?[currentChapter],
-                    context,
-                  );
-                }
-              });
-            },
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(4.0),
           child: Visibility(
-            visible: fetchingProgress < 1,
+            visible: bibleFetchingProgress < 1,
             child: SizedBox(
               width: MediaQuery.sizeOf(context).width * 0.9,
               child: Stack(
@@ -320,7 +352,7 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: BorderRadius.circular(25),
                     color: Theme.of(context).colorScheme.secondary,
                     minHeight: 20,
-                    value: fetchingProgress,
+                    value: bibleFetchingProgress,
                   ),
                   Text(
                     'Fetching Rest of Bible Data',
@@ -333,8 +365,9 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       drawer: Drawer(
+        semanticLabel: "Book Selector",
         child: ListView.builder(
-          itemCount: bibleData.keys.length, // number of options
+          itemCount: bibleData.keys.length,
           itemBuilder: (context, index) {
             return ListTile(
               title: Text(chapterNames[index]),
@@ -342,7 +375,24 @@ class _HomePageState extends State<HomePage> {
                 setState(() {
                   currentBook = bibleData.keys.elementAt(index);
                   saveValue('currentBook', bibleData.keys.elementAt(index));
-                  currentChapter = 0;
+                  Navigator.pop(context);
+                  Scaffold.of(context).openEndDrawer();
+                });
+              },
+            );
+          },
+        ),
+      ),
+      endDrawer: Drawer(
+        semanticLabel: "Chapter Selector",
+        child: ListView.builder(
+          itemCount: bibleData[currentBook]?.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text("${index + 1}"),
+              onTap: () {
+                setState(() {
+                  currentChapter = index;
                   saveValue('currentChapter', currentChapter);
                   chapterWidgets = getContentWidgets(
                     bibleData[currentBook]?[currentChapter],
