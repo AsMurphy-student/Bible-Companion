@@ -304,13 +304,13 @@ class _HomePageState extends State<HomePage> {
                   LinearProgressIndicator(
                     backgroundColor: Colors.grey,
                     borderRadius: BorderRadius.circular(25),
-                    color: Colors.greenAccent,
+                    color: Theme.of(context).colorScheme.secondary,
                     minHeight: 20,
                     value: fetchingProgress,
                   ),
                   Text(
                     'Fetching Rest of Bible Data',
-                    style: const TextStyle(fontSize: 20),
+                    style: const TextStyle(fontSize: 20, color: Colors.black),
                   ),
                 ],
               ),
