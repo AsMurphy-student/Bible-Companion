@@ -93,6 +93,7 @@ class _HomePageState extends State<HomePage> {
             chapterWidgets = getContentWidgets(
               bibleData[currentBook]?[currentChapter],
               context,
+              true,
             );
             bibleFetchingProgress = 1;
           });
@@ -144,6 +145,7 @@ class _HomePageState extends State<HomePage> {
         List<String> bookIDs = listOfBooks
             .map((element) => element['id'].toString())
             .toList();
+        print(bookIDs);
         List<int> bookChapterCounts = listOfBooks
             .map((element) => int.parse(element['numberOfChapters'].toString()))
             .toList();
@@ -164,9 +166,11 @@ class _HomePageState extends State<HomePage> {
               chapterWidgets = getContentWidgets(
                 bibleData[currentBook]?[currentChapter],
                 context.mounted ? context : context,
+                true,
               );
             });
             FlutterNativeSplash.remove();
+            getCommentaryBooks(bookIDs);
           }
           setState(() {
             bibleFetchingProgress = bibleData.length / bookIDs.length;
@@ -184,6 +188,7 @@ class _HomePageState extends State<HomePage> {
         chapterWidgets = getContentWidgets(
           bibleData[currentBook]?[currentChapter],
           context.mounted ? context : context,
+          true,
         );
         print('set chapter widgets');
         FlutterNativeSplash.remove();
@@ -218,78 +223,97 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> getCommentaryBooks() async {
+  Future<void> getCommentaryBooks(List<String> currentBookIDs) async {
     setState(() {
       commentaryFetchingProgress = 0;
     });
     // String translation = prefs.getString('chosenTranslation') ?? "BSB";
-    String fetchURL = 'https://bible.helloao.org/api/c/tyndale/books.json';
+    String tempTranslationID = 'jamieson-fausset-brown';
+    String fetchURL = 'https://bible.helloao.org/api/c/$tempTranslationID/books.json';
     try {
       // Get response and assign variables accordingly
       var response = await http.get(Uri.parse(fetchURL));
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
-        List<dynamic> listOfBooks = jsonResponse['book'];
+        List<dynamic> listOfBooks = jsonResponse['books'];
 
-        List<String> bookIDs = listOfBooks
-            .map((element) => element['id'].toString())
-            .toList();
-        List<int> bookChapterCounts = listOfBooks
-            .map((element) => int.parse(element['numberOfChapters'].toString()))
-            .toList();
+        // List<int> bookChapterCounts = listOfBooks
+        //     .map((element) => int.parse(element['numberOfChapters'].toString()))
+        //     .toList();
 
-        for (int b = 0; b < bookIDs.length; b++) {
+        for (int b = 0; b < currentBookIDs.length; b++) {
           List<dynamic> bookData = [];
-          for (int c = 0; c < bookChapterCounts[b]; c++) {
+
+          String fetchURL =
+              'https://bible.helloao.org/api/c/$tempTranslationID/${currentBookIDs[b]}/${1}.json';
+          // Get response and assign variables accordingly
+          var response = await http.get(Uri.parse(fetchURL));
+          if (response.statusCode != 200) {
+            print('error');
+          }
+          var jsonResponse = jsonDecode(response.body);
+          int numberOfChapters = int.parse(
+            jsonResponse['book']['numberOfChapters'].toString(),
+          );
+          // print("${currentBookIDs[b]} $numberOfChapters chapters");
+
+          for (int c = 0; c < numberOfChapters; c++) {
             bookData.add(
-              await getCommentaryChapterData('tyndale', bookIDs[b], c + 1),
+              await getCommentaryChapterData(
+                '$tempTranslationID',
+                currentBookIDs[b],
+                c + 1,
+              ),
             );
           }
-          bibleData[bookIDs[b]] = bookData;
-          if (bookIDs[b] == currentBook) {
-            print('remove splash');
+          commentaryData[currentBookIDs[b]] = bookData;
+          if (currentBookIDs[b] == currentBook) {
+            // print(commentaryData[currentBook]?[currentChapter]);
             setState(() {
-              chapterWidgets = getContentWidgets(
-                bibleData[currentBook]?[currentChapter],
+              commentaryWidgets = getContentWidgets(
+                commentaryData[currentBook]?[currentChapter],
                 context.mounted ? context : context,
+                false,
               );
             });
-            FlutterNativeSplash.remove();
           }
           setState(() {
-            bibleFetchingProgress = bibleData.length / bookIDs.length;
+            commentaryFetchingProgress =
+                commentaryData.length / currentBookIDs.length;
           });
           // print('Got ${bookIDs[b]}');
         }
-        setState(() {
-          bibleData = bibleData;
-        });
-        print('got books');
-        List<int> bytes = utf8.encode(json.encode(bibleData));
-        List<int> compressed = GZipEncoder().encode(bytes);
-        saveValue('bibleData', base64.encode(compressed));
-        print('saved bible');
-        chapterWidgets = getContentWidgets(
-          bibleData[currentBook]?[currentChapter],
-          context.mounted ? context : context,
-        );
-        print('set chapter widgets');
-        FlutterNativeSplash.remove();
+        // setState(() {
+        //   bibleData = bibleData;
+        // });
+        // print('got books');
+        // List<int> bytes = utf8.encode(json.encode(bibleData));
+        // List<int> compressed = GZipEncoder().encode(bytes);
+        // saveValue('bibleData', base64.encode(compressed));
+        // print('saved bible');
+        // chapterWidgets = getContentWidgets(
+        //   bibleData[currentBook]?[currentChapter],
+        //   context.mounted ? context : context,
+        // );
+        // print('set chapter widgets');
+        // FlutterNativeSplash.remove();
       } else {
         print("Theres a problem: ${response.statusCode}");
       }
+      // print(commentaryData);
     } catch (e) {
       print(e);
     }
   }
 
-  Future<List<dynamic>> getCommentaryChapterData(
+  Future<List<dynamic>?> getCommentaryChapterData(
     String translation,
     String bookID,
     int chapter,
   ) async {
     try {
+      // print('$bookID $chapter');
       String fetchURL =
           'https://bible.helloao.org/api/c/$translation/$bookID/$chapter.json';
       // Get response and assign variables accordingly
@@ -298,12 +322,17 @@ class _HomePageState extends State<HomePage> {
         print('error');
       }
       var jsonResponse = jsonDecode(response.body);
-      List<dynamic> data = jsonResponse['chapter'];
+      List<dynamic> data = jsonResponse['chapter']['content'];
+      // Adding introduction
+      // if (chapter == 0) {
+
+      // }
 
       return data;
     } catch (e) {
-      print('Error: $e');
-      rethrow;
+      print('Error with $bookID $chapter: $e');
+      // rethrow;
+      return null;
     }
   }
 
@@ -322,12 +351,13 @@ class _HomePageState extends State<HomePage> {
   var commentaryData = <String, List<dynamic>>{};
   List<String> chapterNames = [];
   List<Widget> chapterWidgets = [];
+  List<Widget> commentaryWidgets = [];
 
   List<Widget> get bottomNavScreens => [
     PageNotes(),
     PageChecklist(),
     PageHome(chapterWidgets: chapterWidgets),
-    PageHome(chapterWidgets: chapterWidgets),
+    PageHome(chapterWidgets: commentaryWidgets),
     PageSettings(getBooksAndChapters: getBooks),
   ];
 
@@ -340,27 +370,59 @@ class _HomePageState extends State<HomePage> {
         ),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(4.0),
-          child: Visibility(
-            visible: bibleFetchingProgress < 1,
-            child: SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.9,
-              child: Stack(
-                alignment: AlignmentDirectional.center,
-                children: [
-                  LinearProgressIndicator(
-                    backgroundColor: Colors.grey,
-                    borderRadius: BorderRadius.circular(25),
-                    color: Theme.of(context).colorScheme.secondary,
-                    minHeight: 20,
-                    value: bibleFetchingProgress,
+          child: Column(
+            children: [
+              Visibility(
+                visible: bibleFetchingProgress < 1,
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.9,
+                  child: Stack(
+                    alignment: AlignmentDirectional.center,
+                    children: [
+                      LinearProgressIndicator(
+                        backgroundColor: Colors.grey,
+                        borderRadius: BorderRadius.circular(25),
+                        color: Theme.of(context).colorScheme.secondary,
+                        minHeight: 20,
+                        value: bibleFetchingProgress,
+                      ),
+                      Text(
+                        'Fetching Rest of Bible Data',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    'Fetching Rest of Bible Data',
-                    style: const TextStyle(fontSize: 20, color: Colors.black),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Visibility(
+                visible: commentaryFetchingProgress < 1,
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.9,
+                  child: Stack(
+                    alignment: AlignmentDirectional.center,
+                    children: [
+                      LinearProgressIndicator(
+                        backgroundColor: Colors.grey,
+                        borderRadius: BorderRadius.circular(25),
+                        color: Theme.of(context).colorScheme.secondary,
+                        minHeight: 20,
+                        value: commentaryFetchingProgress,
+                      ),
+                      Text(
+                        'Fetching Rest of Commentary Data',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -397,6 +459,12 @@ class _HomePageState extends State<HomePage> {
                   chapterWidgets = getContentWidgets(
                     bibleData[currentBook]?[currentChapter],
                     context,
+                    true,
+                  );
+                  commentaryWidgets = getContentWidgets(
+                    commentaryData[currentBook]?[currentChapter],
+                    context,
+                    false,
                   );
                   Navigator.pop(context);
                 });

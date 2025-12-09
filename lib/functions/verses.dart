@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
 
-List<Widget> getContentWidgets(List<dynamic> data, BuildContext context) {
+List<Widget> getContentWidgets(
+  List<dynamic>? data,
+  BuildContext context,
+  bool isVerses,
+) {
   List<Widget> newWidgets = [];
+
+  if (data == null) {
+    newWidgets.add(
+      RichText(
+        text: TextSpan(
+          children: [
+            WidgetSpan(child: SizedBox(width: 4)),
+            TextSpan(
+              text:
+                  "No Data Found! There was no data found for this chapter from the commentary source.",
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontSize: 32, height: 2.0),
+            ),
+          ],
+        ),
+      ),
+    );
+    return newWidgets;
+  }
+
   for (int i = 0; i < data.length; i++) {
     if (data[i]['type'] == 'heading') {
       if (i > 0) {
@@ -19,21 +44,6 @@ List<Widget> getContentWidgets(List<dynamic> data, BuildContext context) {
     } else if (data[i]['type'] == 'verse') {
       String verse = '';
       for (int v = 0; v < data[i]['content'].length; v++) {
-        // if (data[i]['content'][v] is String) {
-        // if (v > 0 && data[i]['content'][v - 1] is String) {
-        //   verse += " ${data[i]['content'][v].toString()}";
-        // } else {
-        //   verse += data[i]['content'][v].toString();
-        // }
-        // } else if (data[i]['content'][v]['text'] is String) {
-        //   if (v > 0 && data[i]['content'][v - 1]['text'] is String) {
-        //     verse += " ${data[i]['content'][v]['text'].toString()}";
-        //   } else {
-        //     verse += data[i]['content'][v]['text'].toString();
-        //   }
-        // } else if (data[i]['content'][v]['lineBreak'] is bool) {
-        //   verse += '\n';
-        // }
         if (data[i]['content'][v] is String) {
           if (v > 0 && data[i]['content'][v - 1] is String) {
             verse += " ${data[i]['content'][v].toString()}";
@@ -50,28 +60,20 @@ List<Widget> getContentWidgets(List<dynamic> data, BuildContext context) {
         RichText(
           text: TextSpan(
             children: [
-              TextSpan(
-                text: data[i]['number'].toString(),
-                // style: TextStyle(
-                //   fontSize: 12,
-                //   textBaseline: TextBaseline.ideographic,
-                // ),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
-                  textBaseline: TextBaseline.ideographic,
+              if (isVerses)
+                TextSpan(
+                  text: data[i]['number'].toString(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 12,
+                    textBaseline: TextBaseline.ideographic,
+                  ),
                 ),
-              ),
               WidgetSpan(child: SizedBox(width: 4)),
               TextSpan(
                 text: verse,
-                // style: TextStyle(
-                //   fontSize: 18,
-                //   height: 1.5,
-                // ),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 18,
-                  height: 2.0,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontSize: 18, height: 2.0),
               ),
             ],
           ),
