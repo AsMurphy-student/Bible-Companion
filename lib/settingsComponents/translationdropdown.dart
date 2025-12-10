@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:biblereader/utils/dialogHelper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,7 +79,16 @@ class _TranslationdropdownState extends State<Translationdropdown> {
         DropdownButton<String>(
           value: chosenTranslation,
           icon: Icon(Icons.arrow_downward),
+          disabledHint: Text('Unable to get Translations'),
           onChanged: (String? newValue) {
+            alertDialog(
+              context,
+              'Fetching Data can take a while.',
+              'Be aware that fetching data can take a while to complete.',
+              'Ok',
+              false,
+            );
+            
             setState(() {
               chosenTranslation = newValue!;
               saveValue('chosenTranslation', newValue);

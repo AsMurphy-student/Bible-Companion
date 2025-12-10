@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:biblereader/checklist.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/notes.dart';
+import 'package:biblereader/utils/dialogHelper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -130,35 +131,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void noInternetAlert(
-    BuildContext context,
-    String title,
-    String message,
-    String buttonMessage,
-    bool forceExit,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Closes the dialog
-                if (forceExit) {
-                  SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-                }
-              },
-              child: Text(buttonMessage),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // This function checks internet connection with a lookup
   // This is the only piece of code that I have copied
   // Is is from here:
@@ -253,7 +225,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       FlutterNativeSplash.remove();
-      noInternetAlert(
+      alertDialog(
         context,
         'No internet or some other error.',
         'No internet is present unable to fetch data.',
@@ -368,7 +340,7 @@ class _HomePageState extends State<HomePage> {
       // print(commentaryData);
     } catch (e) {
       FlutterNativeSplash.remove();
-      noInternetAlert(
+      alertDialog(
         context,
         'No internet or some other error while fetching commentary data.',
         'Commentary data will not be available and app will need to be restarted to fetch.',
