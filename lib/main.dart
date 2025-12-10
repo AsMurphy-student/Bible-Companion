@@ -4,6 +4,7 @@ import 'package:biblereader/checklist.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/notes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'bible.dart';
@@ -97,6 +98,7 @@ class _HomePageState extends State<HomePage> {
             );
             bibleFetchingProgress = 1;
           });
+          getCommentaryBooks(bibleData.keys.toList());
         } catch (e) {
           print('Error decoding JSON: $e');
         }
@@ -128,7 +130,61 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void noInternetAlert(
+    BuildContext context,
+    String title,
+    String message,
+    String buttonMessage,
+    bool forceExit,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Closes the dialog
+                if (forceExit) {
+                  SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+                }
+              },
+              child: Text(buttonMessage),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // This function checks internet connection with a lookup
+  // This is the only piece of code that I have copied
+  // Is is from here:
+  // https://stackoverflow.com/questions/72791951/error-unsupported-operation-internetaddress-lookup-flutter-web
+  // Future<bool> _hasNetworkMobile(String knownUrl) async {
+  //   try {
+  //     final result = await InternetAddress.lookup(knownUrl);
+  //     return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+  //   } on SocketException catch (_) {}
+  //   return false;
+  // }
+
+  // Future<bool> _hasNetworkWeb(String knownUrl) async {
+  //   try {
+  //     final result = await http.get(Uri.parse(knownUrl));
+  //     if (result.statusCode == 200) return true;
+  //   } on SocketException catch (_) {}
+  //   return false;
+  // }
+
   Future<void> getBooks() async {
+    // if (await _hasNetworkMobile('https://bible.helloao.org/')) {
+    //   FlutterNativeSplash.remove();
+    //   noInternetAlert(context);
+    //   return;
+    // }
     setState(() {
       bibleFetchingProgress = 0;
     });
@@ -196,7 +252,14 @@ class _HomePageState extends State<HomePage> {
         print("Theres a problem: ${response.statusCode}");
       }
     } catch (e) {
-      print(e);
+      FlutterNativeSplash.remove();
+      noInternetAlert(
+        context,
+        'No internet or some other error.',
+        'No internet is present unable to fetch data.',
+        'Exit App',
+        true,
+      );
     }
   }
 
@@ -229,7 +292,8 @@ class _HomePageState extends State<HomePage> {
     });
     // String translation = prefs.getString('chosenTranslation') ?? "BSB";
     String tempTranslationID = 'jamieson-fausset-brown';
-    String fetchURL = 'https://bible.helloao.org/api/c/$tempTranslationID/books.json';
+    String fetchURL =
+        'https://bible.helloao.org/api/c/$tempTranslationID/books.json';
     try {
       // Get response and assign variables accordingly
       var response = await http.get(Uri.parse(fetchURL));
@@ -261,7 +325,7 @@ class _HomePageState extends State<HomePage> {
           for (int c = 0; c < numberOfChapters; c++) {
             bookData.add(
               await getCommentaryChapterData(
-                '$tempTranslationID',
+                tempTranslationID,
                 currentBookIDs[b],
                 c + 1,
               ),
@@ -303,7 +367,17 @@ class _HomePageState extends State<HomePage> {
       }
       // print(commentaryData);
     } catch (e) {
-      print(e);
+      FlutterNativeSplash.remove();
+      noInternetAlert(
+        context,
+        'No internet or some other error while fetching commentary data.',
+        'Commentary data will not be available and app will need to be restarted to fetch.',
+        'Ok',
+        false,
+      );
+      setState(() {
+        commentaryFetchingProgress = 1;
+      });
     }
   }
 
