@@ -77,6 +77,17 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getStringList('chapterNames') != null) {
         chapterNames = prefs.getStringList('chapterNames')!;
       }
+      if (prefs.getString('checklist') != null) {
+        checklistController = TextEditingController(
+          text: prefs.getString('checklist'),
+        );
+        checklistController.addListener(() => saveValue('checklist', checklistController.text));
+      } else {
+        checklistController = TextEditingController(
+          text: '1. Item 1\n2. Item 2\n3. Item 3\n4. Item 4',
+        );
+        checklistController.addListener(() => saveValue('checklist', checklistController.text));
+      }
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
@@ -399,9 +410,11 @@ class _HomePageState extends State<HomePage> {
   List<Widget> chapterWidgets = [];
   List<Widget> commentaryWidgets = [];
 
+  TextEditingController checklistController = TextEditingController(text: '');
+
   List<Widget> get bottomNavScreens => [
     PageNotes(),
-    PageChecklist(),
+    PageChecklist(controller: checklistController),
     PageHome(chapterWidgets: chapterWidgets),
     PageHome(chapterWidgets: commentaryWidgets),
     PageSettings(getBooksAndChapters: getBooks),
