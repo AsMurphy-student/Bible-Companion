@@ -1,8 +1,7 @@
 import 'dart:convert';
 
-import 'package:biblereader/checklist.dart';
+import 'package:biblereader/checklist_notes.dart';
 import 'package:biblereader/functions/verses.dart';
-import 'package:biblereader/notes.dart';
 import 'package:biblereader/utils/dialogHelper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -80,12 +79,16 @@ class _HomePageState extends State<HomePage> {
         checklistController = TextEditingController(
           text: prefs.getString('checklist'),
         );
-        checklistController.addListener(() => saveValue('checklist', checklistController.text));
+        checklistController.addListener(
+          () => saveValue('checklist', checklistController.text),
+        );
       } else {
         checklistController = TextEditingController(
           text: '1. Item 1\n2. Item 2\n3. Item 3\n4. Item 4',
         );
-        checklistController.addListener(() => saveValue('checklist', checklistController.text));
+        checklistController.addListener(
+          () => saveValue('checklist', checklistController.text),
+        );
       }
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
@@ -198,6 +201,9 @@ class _HomePageState extends State<HomePage> {
             bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
           }
           bibleData[bookIDs[b]] = bookData;
+
+          List<String> bookNotesInit = List.filled(bookData.length, '');
+          notesData[bookIDs[b]] = bookNotesInit;
           if (bookIDs[b] == currentBook) {
             print('remove splash');
             setState(() {
@@ -230,6 +236,12 @@ class _HomePageState extends State<HomePage> {
         );
         print('set chapter widgets');
         FlutterNativeSplash.remove();
+
+        print('trying to save empty notes data');
+        List<int> notesBytes = utf8.encode(json.encode(notesData));
+        List<int> notesCompressed = GZipEncoder().encode(notesBytes);
+        saveValue('notesData', base64.encode(notesCompressed));
+        print('successfully saved notes data');
       } else {
         print("Theres a problem: ${response.statusCode}");
       }
@@ -405,15 +417,17 @@ class _HomePageState extends State<HomePage> {
   int currentChapter = 0;
   var bibleData = <String, List<dynamic>>{};
   var commentaryData = <String, List<dynamic>>{};
+  var notesData = <String, List<String>>{};
   List<String> chapterNames = [];
   List<Widget> chapterWidgets = [];
   List<Widget> commentaryWidgets = [];
 
   TextEditingController checklistController = TextEditingController(text: '');
+  TextEditingController notesController = TextEditingController(text: '');
 
   List<Widget> get bottomNavScreens => [
-    PageNotes(),
-    PageChecklist(controller: checklistController),
+    PageChecklistNotes(controller: notesController),
+    PageChecklistNotes(controller: checklistController),
     PageHome(chapterWidgets: chapterWidgets),
     PageHome(chapterWidgets: commentaryWidgets),
     PageSettings(getBooksAndChapters: getBooks),

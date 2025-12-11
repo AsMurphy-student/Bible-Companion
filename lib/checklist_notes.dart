@@ -1,36 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class PageChecklist extends StatefulWidget {
+class PageChecklistNotes extends StatefulWidget {
   final TextEditingController controller;
 
-  const PageChecklist({super.key, required this.controller});
+  const PageChecklistNotes({super.key, required this.controller});
 
   @override
-  State<PageChecklist> createState() => _PageChecklistState();
+  State<PageChecklistNotes> createState() => _PageChecklistNotesState();
 }
 
-class _PageChecklistState extends State<PageChecklist> {
-  // Prefs
-  late SharedPreferences prefs;
-  Future<void> initPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
-
-  Future<void> saveValue(String key, dynamic value) async {
-    if (value is String) {
-      await prefs.setString(key, value);
-    } else if (value is int) {
-      await prefs.setInt(key, value);
-    }
-  }
-  
-  @override
-  void initState() {
-    super.initState();
-    initPrefs();
-  }
-
+class _PageChecklistNotesState extends State<PageChecklistNotes> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
