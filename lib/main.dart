@@ -96,16 +96,33 @@ class _HomePageState extends State<HomePage> {
         List<int> bytes = GZipDecoder().decodeBytes(compressed);
         try {
           Map<String, dynamic> loadedNotesData = jsonDecode(utf8.decode(bytes));
-          Map<String, List<String>> parsedNotesData = Map.from(loadedNotesData.map((key, value) => MapEntry(key, (value as List).map((e) => e.toString()).toList())));
+          Map<String, List<String>> parsedNotesData = Map.from(
+            loadedNotesData.map(
+              (key, value) => MapEntry(
+                key,
+                (value as List).map((e) => e.toString()).toList(),
+              ),
+            ),
+          );
           // print('working');
           setState(() {
             notesData = parsedNotesData;
-            print('success');
+            notesController = TextEditingController(
+              text: notesData[currentBook]?[currentChapter],
+            );
           });
         } catch (e) {
           print('Error decoding JSON: $e');
         }
       }
+
+      notesController.addListener(() {
+        notesData[currentBook]?[currentChapter] = notesController.text;
+        List<int> notesBytes = utf8.encode(json.encode(notesData));
+        List<int> notesCompressed = GZipEncoder().encode(notesBytes);
+        saveValue('notesData', base64.encode(notesCompressed));
+      });
+
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
@@ -442,8 +459,8 @@ class _HomePageState extends State<HomePage> {
   TextEditingController notesController = TextEditingController(text: '');
 
   List<Widget> get bottomNavScreens => [
-    PageChecklistNotes(controller: notesController),
-    PageChecklistNotes(controller: checklistController),
+    PageChecklistNotes(controller: notesController, title: 'Chapter Notes', inputHint: 'Type Notes for Chapter Here...',),
+    PageChecklistNotes(controller: checklistController, title: 'Reflection Checklist', inputHint: 'Type Checklist Here...'),
     PageHome(chapterWidgets: chapterWidgets),
     PageHome(chapterWidgets: commentaryWidgets),
     PageSettings(getBooksAndChapters: getBooks),
@@ -554,6 +571,7 @@ class _HomePageState extends State<HomePage> {
                     context,
                     false,
                   );
+                  notesController.text = notesData[currentBook]![currentChapter];
                   Navigator.pop(context);
                 });
               },

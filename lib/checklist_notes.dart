@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 
 class PageChecklistNotes extends StatefulWidget {
   final TextEditingController controller;
+  final String title;
+  final String inputHint;
 
-  const PageChecklistNotes({super.key, required this.controller});
+  const PageChecklistNotes({
+    super.key,
+    required this.controller,
+    required this.title,
+    required this.inputHint,
+  });
 
   @override
   State<PageChecklistNotes> createState() => _PageChecklistNotesState();
@@ -18,15 +25,13 @@ class _PageChecklistNotesState extends State<PageChecklistNotes> {
       child: Center(
         child: Column(
           children: [
-            Text('Reflection Checklist', style: TextStyle(fontSize: 30)),
+            Text(widget.title, style: TextStyle(fontSize: 30)),
             TextField(
               controller: widget.controller,
               keyboardType: TextInputType.multiline,
               minLines: 10,
               maxLines: null,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(border: OutlineInputBorder(), hint: Text(widget.inputHint)),
             ),
           ],
         ),
