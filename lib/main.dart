@@ -237,11 +237,11 @@ class _HomePageState extends State<HomePage> {
         print('set chapter widgets');
         FlutterNativeSplash.remove();
 
-        print('trying to save empty notes data');
-        List<int> notesBytes = utf8.encode(json.encode(notesData));
-        List<int> notesCompressed = GZipEncoder().encode(notesBytes);
-        saveValue('notesData', base64.encode(notesCompressed));
-        print('successfully saved notes data');
+        if (prefs.getString('notesData') == null) {
+          List<int> notesBytes = utf8.encode(json.encode(notesData));
+          List<int> notesCompressed = GZipEncoder().encode(notesBytes);
+          saveValue('notesData', base64.encode(notesCompressed));
+        }
       } else {
         print("Theres a problem: ${response.statusCode}");
       }
