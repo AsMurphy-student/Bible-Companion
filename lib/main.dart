@@ -145,7 +145,7 @@ class _HomePageState extends State<HomePage> {
             );
             bibleFetchingProgress = 1;
           });
-          getCommentaryBooks(bibleData.keys.toList());
+          getCommentaryBooks();
         } catch (e) {
           print('Error decoding JSON: $e');
         }
@@ -220,6 +220,7 @@ class _HomePageState extends State<HomePage> {
             .map((element) => element['id'].toString())
             .toList();
         print(bookIDs);
+        currentBookIDs = bookIDs;
         List<int> bookChapterCounts = listOfBooks
             .map((element) => int.parse(element['numberOfChapters'].toString()))
             .toList();
@@ -247,7 +248,7 @@ class _HomePageState extends State<HomePage> {
               );
             });
             FlutterNativeSplash.remove();
-            getCommentaryBooks(bookIDs);
+            getCommentaryBooks();
           }
           setState(() {
             bibleFetchingProgress = bibleData.length / bookIDs.length;
@@ -313,92 +314,28 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> getCommentaryBooks(List<String> currentBookIDs) async {
+  Future<void> getCommentaryBooks() async {
+    if (currentBookIDs.isEmpty) {
+      currentBookIDs = bibleData.keys.toList();
+    }
     setState(() {
       commentaryFetchingProgress = 0;
     });
-    // String translation = prefs.getString('chosenTranslation') ?? "BSB";
-    String tempTranslationID = 'jamieson-fausset-brown';
+    String commentaryTranslationID =
+        prefs.getString('chosenCommentary') ??
+        "jamieson-fausset-brown";
     String fetchURL =
-        'https://bible.helloao.org/api/c/$tempTranslationID/books.json';
+        'https://bible.helloao.org/api/c/$commentaryTranslationID/books.json';
+    var response;
     try {
       // Get response and assign variables accordingly
-      var response = await http.get(Uri.parse(fetchURL));
-
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        List<dynamic> listOfBooks = jsonResponse['books'];
-
-        // List<int> bookChapterCounts = listOfBooks
-        //     .map((element) => int.parse(element['numberOfChapters'].toString()))
-        //     .toList();
-
-        for (int b = 0; b < currentBookIDs.length; b++) {
-          List<dynamic> bookData = [];
-
-          String fetchURL =
-              'https://bible.helloao.org/api/c/$tempTranslationID/${currentBookIDs[b]}/${1}.json';
-          // Get response and assign variables accordingly
-          var response = await http.get(Uri.parse(fetchURL));
-          if (response.statusCode != 200) {
-            print('error');
-          }
-          var jsonResponse = jsonDecode(response.body);
-          int numberOfChapters = int.parse(
-            jsonResponse['book']['numberOfChapters'].toString(),
-          );
-          // print("${currentBookIDs[b]} $numberOfChapters chapters");
-
-          for (int c = 0; c < numberOfChapters; c++) {
-            bookData.add(
-              await getCommentaryChapterData(
-                tempTranslationID,
-                currentBookIDs[b],
-                c + 1,
-              ),
-            );
-          }
-          commentaryData[currentBookIDs[b]] = bookData;
-          if (currentBookIDs[b] == currentBook) {
-            // print(commentaryData[currentBook]?[currentChapter]);
-            setState(() {
-              commentaryWidgets = getContentWidgets(
-                commentaryData[currentBook]?[currentChapter],
-                context.mounted ? context : context,
-                false,
-              );
-            });
-          }
-          setState(() {
-            commentaryFetchingProgress =
-                commentaryData.length / currentBookIDs.length;
-          });
-          // print('Got ${bookIDs[b]}');
-        }
-        // setState(() {
-        //   bibleData = bibleData;
-        // });
-        // print('got books');
-        // List<int> bytes = utf8.encode(json.encode(bibleData));
-        // List<int> compressed = GZipEncoder().encode(bytes);
-        // saveValue('bibleData', base64.encode(compressed));
-        // print('saved bible');
-        // chapterWidgets = getContentWidgets(
-        //   bibleData[currentBook]?[currentChapter],
-        //   context.mounted ? context : context,
-        // );
-        // print('set chapter widgets');
-        // FlutterNativeSplash.remove();
-      } else {
-        print("Theres a problem: ${response.statusCode}");
-      }
-      // print(commentaryData);
+      response = await http.get(Uri.parse(fetchURL));
     } catch (e) {
       FlutterNativeSplash.remove();
       alertDialog(
         context,
         'No internet or some other error while fetching commentary data.',
-        'Commentary data will not be available and app will need to be restarted to fetch.',
+        'Commentary data will not be available and app will need to be restarted to fetch. Error: $e',
         'Ok',
         false,
       );
@@ -406,6 +343,87 @@ class _HomePageState extends State<HomePage> {
         commentaryFetchingProgress = 1;
       });
     }
+
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      List<dynamic> listOfBooks = jsonResponse['books'];
+
+      // List<int> bookChapterCounts = listOfBooks
+      //     .map((element) => int.parse(element['numberOfChapters'].toString()))
+      //     .toList();
+
+      for (int b = 0; b < currentBookIDs.length; b++) {
+        List<dynamic> bookData = [];
+
+        String fetchURL =
+            'https://bible.helloao.org/api/c/$commentaryTranslationID/${currentBookIDs[b]}/${1}.json';
+        // Get response and assign variables accordingly
+        var response = await http.get(Uri.parse(fetchURL));
+
+        if (response.statusCode != 200) {
+          print('error');
+        }
+        var jsonResponse;
+        try {
+          jsonResponse = jsonDecode(response.body);
+        } catch (e) {
+          print("Error no book: ${currentBookIDs[b]} Error: $e");
+          continue;
+        }
+        int numberOfChapters = int.parse(
+          jsonResponse['book']['numberOfChapters'].toString(),
+        );
+        // print("${currentBookIDs[b]} $numberOfChapters chapters");
+
+        for (int c = 0; c < numberOfChapters; c++) {
+          // print("${currentBookIDs[b]} ${c + 1}");
+          bookData.add(
+            await getCommentaryChapterData(
+              commentaryTranslationID,
+              currentBookIDs[b],
+              c + 1,
+            ),
+          );
+        }
+        commentaryData[currentBookIDs[b]] = bookData;
+        if (currentBookIDs[b] == currentBook) {
+          // print(commentaryData[currentBook]?[currentChapter]);
+          setState(() {
+            commentaryWidgets = getContentWidgets(
+              commentaryData[currentBook]?[currentChapter],
+              context.mounted ? context : context,
+              false,
+            );
+          });
+        }
+        setState(() {
+          commentaryFetchingProgress =
+              commentaryData.length / currentBookIDs.length;
+        });
+        // print('Got ${bookIDs[b]}');
+      }
+
+      if (commentaryData.length != currentBookIDs.length) {
+        commentaryFetchingProgress = 1;
+      }
+      // setState(() {
+      //   bibleData = bibleData;
+      // });
+      // print('got books');
+      // List<int> bytes = utf8.encode(json.encode(bibleData));
+      // List<int> compressed = GZipEncoder().encode(bytes);
+      // saveValue('bibleData', base64.encode(compressed));
+      // print('saved bible');
+      // chapterWidgets = getContentWidgets(
+      //   bibleData[currentBook]?[currentChapter],
+      //   context.mounted ? context : context,
+      // );
+      // print('set chapter widgets');
+      // FlutterNativeSplash.remove();
+    } else {
+      print("Theres a problem: ${response.statusCode}");
+    }
+    // print(commentaryData);
   }
 
   Future<List<dynamic>?> getCommentaryChapterData(
@@ -452,6 +470,7 @@ class _HomePageState extends State<HomePage> {
   var commentaryData = <String, List<dynamic>>{};
   var notesData = <String, List<String>>{};
   List<String> chapterNames = [];
+  List<String> currentBookIDs = [];
   List<Widget> chapterWidgets = [];
   List<Widget> commentaryWidgets = [];
 
@@ -459,11 +478,22 @@ class _HomePageState extends State<HomePage> {
   TextEditingController notesController = TextEditingController(text: '');
 
   List<Widget> get bottomNavScreens => [
-    PageChecklistNotes(controller: notesController, title: 'Chapter Notes', inputHint: 'Type Notes for Chapter Here...',),
-    PageChecklistNotes(controller: checklistController, title: 'Reflection Checklist', inputHint: 'Type Checklist Here...'),
+    PageChecklistNotes(
+      controller: notesController,
+      title: 'Chapter Notes',
+      inputHint: 'Type Notes for Chapter Here...',
+    ),
+    PageChecklistNotes(
+      controller: checklistController,
+      title: 'Reflection Checklist',
+      inputHint: 'Type Checklist Here...',
+    ),
     PageHome(chapterWidgets: chapterWidgets),
     PageHome(chapterWidgets: commentaryWidgets),
-    PageSettings(getBooksAndChapters: getBooks),
+    PageSettings(
+      getBooksAndChapters: getBooks,
+      getCommentary: getCommentaryBooks,
+    ),
   ];
 
   @override
@@ -571,7 +601,8 @@ class _HomePageState extends State<HomePage> {
                     context,
                     false,
                   );
-                  notesController.text = notesData[currentBook]![currentChapter];
+                  notesController.text =
+                      notesData[currentBook]![currentChapter];
                   Navigator.pop(context);
                 });
               },
