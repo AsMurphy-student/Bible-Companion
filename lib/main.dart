@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
         );
       } else {
         checklistController = TextEditingController(
-          text: '1. Item 1\n2. Item 2\n3. Item 3\n4. Item 4',
+          text: '1. Identify exactly what this verse/section is saying.\n2. Where can this teaching apply to today?\n3. Where can this teaching apply to me?',
         );
         checklistController.addListener(
           () => saveValue('checklist', checklistController.text),
