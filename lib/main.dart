@@ -465,9 +465,9 @@ class _HomePageState extends State<HomePage> {
   int currentBottomTab = 2;
   String currentBook = 'GEN';
   int currentChapter = 0;
-  var bibleData = <String, List<dynamic>>{};
-  var commentaryData = <String, List<dynamic>>{};
-  var notesData = <String, List<String>>{};
+  Map<String, List<dynamic>> bibleData = {};
+  Map<String, List<dynamic>> commentaryData = {};
+  Map<String, List<String>> notesData = {};
   List<String> chapterNames = [];
   List<String> currentBookIDs = [];
   List<Widget> chapterWidgets = [];
