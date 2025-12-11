@@ -90,6 +90,22 @@ class _HomePageState extends State<HomePage> {
           () => saveValue('checklist', checklistController.text),
         );
       }
+      if (prefs.getString('notesData') != null) {
+        String notesDataString = prefs.getString('notesData')!;
+        List<int> compressed = base64.decode(notesDataString);
+        List<int> bytes = GZipDecoder().decodeBytes(compressed);
+        try {
+          Map<String, dynamic> loadedNotesData = jsonDecode(utf8.decode(bytes));
+          Map<String, List<String>> parsedNotesData = Map.from(loadedNotesData.map((key, value) => MapEntry(key, (value as List).map((e) => e.toString()).toList())));
+          // print('working');
+          setState(() {
+            notesData = parsedNotesData;
+            print('success');
+          });
+        } catch (e) {
+          print('Error decoding JSON: $e');
+        }
+      }
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
