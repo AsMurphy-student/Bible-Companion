@@ -34,14 +34,16 @@ class _PageHomeState extends State<PageHome> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(16.0),
+      margin: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceBright,
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 8),
+        borderRadius: BorderRadius.circular(10),
+      ),
       width: double.infinity,
       height: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: widget.chapterWidgets ?? [],
-        ),
-      )
+      child: ListView(children: widget.chapterWidgets ?? []),
     );
   }
 }

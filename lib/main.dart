@@ -322,8 +322,7 @@ class _HomePageState extends State<HomePage> {
       commentaryFetchingProgress = 0;
     });
     String commentaryTranslationID =
-        prefs.getString('chosenCommentary') ??
-        "jamieson-fausset-brown";
+        prefs.getString('chosenCommentary') ?? "jamieson-fausset-brown";
     String fetchURL =
         'https://bible.helloao.org/api/c/$commentaryTranslationID/books.json';
     var response;
@@ -503,6 +502,20 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           "${bibleData.isNotEmpty && chapterNames.isNotEmpty ? chapterNames[bibleData.keys.toList().indexOf(currentBook)] : 'Fetching IDs'} ${currentChapter + 1}",
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info),
+            onPressed: () {
+              alertDialog(
+                context,
+                'About App',
+                'This is a Bible App which utilizes the Free Bible API. It features the Bible with Commentary, along with notes and a reflection checklist that is configurable.',
+                'Ok',
+                false,
+              );
+            },
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(4.0),
           child: Column(
