@@ -4,6 +4,7 @@ import 'package:biblereader/checklist_notes.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/utils/dialogHelper.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'bible.dart';
@@ -26,6 +27,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       home: const HomePage(),
       theme: ThemeData(
+        fontFamily: GoogleFonts.sora().fontFamily,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Color(0x0fd45f2d),
@@ -36,6 +38,7 @@ class MainApp extends StatelessWidget {
         ),
       ),
       darkTheme: ThemeData(
+        fontFamily: GoogleFonts.sora().fontFamily,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Color(0x0fd45f2d),
