@@ -466,35 +466,46 @@ class _HomePageState extends State<HomePage> {
     initPrefs();
   }
 
+  // Progress bars variables
   double bibleFetchingProgress = 0;
   double commentaryFetchingProgress = 0;
+  // Current tab, book, and chapter selected
   int currentBottomTab = 2;
   String currentBook = 'GEN';
   int currentChapter = 0;
+  // Maps for bible, commentary, and notes data
   Map<String, List<dynamic>> bibleData = {};
   Map<String, List<dynamic>> commentaryData = {};
   Map<String, List<String>> notesData = {};
+  // List of chapter names and bookIDs
   List<String> chapterNames = [];
   List<String> currentBookIDs = [];
+  // Both array of chapter widgets for bible and commentary pages
   List<Widget> chapterWidgets = [];
   List<Widget> commentaryWidgets = [];
-
+  // Controllers for checklist and notes
   TextEditingController checklistController = TextEditingController(text: '');
   TextEditingController notesController = TextEditingController(text: '');
 
+  // bottom navigation screens
   List<Widget> get bottomNavScreens => [
+    // Notes page
     PageChecklistNotes(
       controller: notesController,
       title: 'Chapter Notes',
       inputHint: 'Type Notes for Chapter Here...',
     ),
+    // Checklist Page
     PageChecklistNotes(
       controller: checklistController,
       title: 'Reflection Checklist',
       inputHint: 'Type Checklist Here...',
     ),
+    // Bible Page
     PageHome(chapterWidgets: chapterWidgets),
+    // Commentary Page
     PageHome(chapterWidgets: commentaryWidgets),
+    // Settings Page
     PageSettings(
       getBooksAndChapters: getBooks,
       getCommentary: getCommentaryBooks,
