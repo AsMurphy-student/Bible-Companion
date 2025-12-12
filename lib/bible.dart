@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// This is the page home class which display bible data
 class PageHome extends StatefulWidget {
+  // Parameter for list of content widgets to display
   final List<Widget>? chapterWidgets;
 
   const PageHome({super.key, required this.chapterWidgets});
@@ -17,14 +19,7 @@ class _PageHomeState extends State<PageHome> {
     prefs = await SharedPreferences.getInstance();
   }
 
-  Future<void> saveValue(String key, dynamic value) async {
-    if (value is String) {
-      await prefs.setString(key, value);
-    } else if (value is int) {
-      await prefs.setInt(key, value);
-    }
-  }
-
+  // Init prefs
   @override
   void initState() {
     super.initState();
@@ -36,6 +31,7 @@ class _PageHomeState extends State<PageHome> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       margin: const EdgeInsets.all(16.0),
+      // Box Decoration usage for styling
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceBright,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 8),
@@ -43,6 +39,7 @@ class _PageHomeState extends State<PageHome> {
       ),
       width: double.infinity,
       height: double.infinity,
+      // List of content widgets
       child: ListView(children: widget.chapterWidgets ?? []),
     );
   }
