@@ -307,10 +307,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Helper function to fetch specific chapter data
   Future<List<dynamic>> getChapterData(
-    String translation,
-    String bookID,
-    int chapter,
+    String translation, // Translation code
+    String bookID, // BookID to fetch
+    int chapter, // Specific chapter to query
   ) async {
     try {
       String fetchURL =
@@ -318,6 +319,7 @@ class _HomePageState extends State<HomePage> {
       // Get response and assign variables accordingly
       http.Response response = await http.get(Uri.parse(fetchURL));
       if (response.statusCode != 200) {
+        // Catch error and alert user
         alertDialog(
           context.mounted ? context : context,
           'No internet or some other error.',
@@ -326,11 +328,12 @@ class _HomePageState extends State<HomePage> {
           false,
         );
       }
+      // Get data and return it
       dynamic jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['chapter']['content'];
-
       return data;
     } catch (e) {
+      // Catch error and alert user
       alertDialog(
         context.mounted ? context : context,
         'No internet or some other error.',
@@ -338,6 +341,7 @@ class _HomePageState extends State<HomePage> {
         'Ok',
         false,
       );
+      // Rethrow needed for compiling
       rethrow;
     }
   }
