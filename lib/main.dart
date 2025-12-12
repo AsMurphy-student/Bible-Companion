@@ -346,40 +346,53 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // getCommentaryBooks function which fetchs commentary data
   Future<void> getCommentaryBooks() async {
+    // If currentBookIDs of current translation is not set, set it
     if (currentBookIDs.isEmpty) {
       currentBookIDs = bibleData.keys.toList();
     }
+    // Set commentary fetching progress to 0
     setState(() {
       commentaryFetchingProgress = 0;
     });
     String commentaryTranslationID =
         prefs.getString('chosenCommentary') ?? "jamieson-fausset-brown";
+    // Loop through and fetch each book
     for (int b = 0; b < currentBookIDs.length; b++) {
       List<dynamic> bookData = [];
-
       String fetchURL =
           'https://bible.helloao.org/api/c/$commentaryTranslationID/${currentBookIDs[b]}/${1}.json';
       // Get response and assign variables accordingly
       http.Response response = await http.get(Uri.parse(fetchURL));
 
       if (response.statusCode != 200) {
-        print('error');
+        // Catch error and alert user
+        alertDialog(
+          context.mounted ? context : context,
+          'No internet or some other error.',
+          'Return status code: ${response.statusCode}',
+          'Ok',
+          false,
+        );
       }
       dynamic jsonResponse;
       try {
         jsonResponse = jsonDecode(response.body);
       } catch (e) {
-        print("Error no book: ${currentBookIDs[b]} Error: $e");
+        // If we cannot decode json we continue and skip the book
+        // Alert is not used here as user does not need to know
+        // and getting 20 dialog alerts is not ideal for some commentaries
+        // print("Error no book: ${currentBookIDs[b]} Error: $e");
         continue;
       }
+      // Get number of chapters
       int numberOfChapters = int.parse(
         jsonResponse['book']['numberOfChapters'].toString(),
       );
-      // print("${currentBookIDs[b]} $numberOfChapters chapters");
 
+      // Loop through chapters and fetch commentary chapter data
       for (int c = 0; c < numberOfChapters; c++) {
-        // print("${currentBookIDs[b]} ${c + 1}");
         bookData.add(
           await getCommentaryChapterData(
             commentaryTranslationID,
@@ -388,9 +401,11 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       }
+      // Once all chapters are fetched
+      // Set to commentary data map accordingly
       commentaryData[currentBookIDs[b]] = bookData;
+      // If on currently selected book update chapter widgets
       if (currentBookIDs[b] == currentBook) {
-        // print(commentaryData[currentBook]?[currentChapter]);
         setState(() {
           commentaryWidgets = getContentWidgets(
             commentaryData[currentBook]?[currentChapter],
@@ -399,33 +414,16 @@ class _HomePageState extends State<HomePage> {
           );
         });
       }
+      // Update progress bar variable
       setState(() {
         commentaryFetchingProgress = (b + 1) / currentBookIDs.length;
       });
-      // print('Got ${bookIDs[b]}');
     }
+    // At end of loop set to 1 
+    // to ensure progress bar always disappears upon completion
     setState(() {
       commentaryFetchingProgress = 1;
     });
-
-    // if (commentaryData.length != currentBookIDs.length) {
-    //   commentaryFetchingProgress = 1;
-    // }
-    // setState(() {
-    //   bibleData = bibleData;
-    // });
-    // print('got books');
-    // List<int> bytes = utf8.encode(json.encode(bibleData));
-    // List<int> compressed = GZipEncoder().encode(bytes);
-    // saveValue('bibleData', base64.encode(compressed));
-    // print('saved bible');
-    // chapterWidgets = getContentWidgets(
-    //   bibleData[currentBook]?[currentChapter],
-    //   context.mounted ? context : context,
-    // );
-    // print('set chapter widgets');
-    // FlutterNativeSplash.remove();
-    // print(commentaryData);
   }
 
   Future<List<dynamic>?> getCommentaryChapterData(
