@@ -333,7 +333,8 @@ class _HomePageState extends State<HomePage> {
       List<dynamic> data = jsonResponse['chapter']['content'];
       return data;
     } catch (e) {
-      // Catch error and alert user
+      // Catch error and alert user as this will stop runtime
+      // This error should most likely never happen
       alertDialog(
         context.mounted ? context : context,
         'No internet or some other error.',
@@ -419,42 +420,46 @@ class _HomePageState extends State<HomePage> {
         commentaryFetchingProgress = (b + 1) / currentBookIDs.length;
       });
     }
-    // At end of loop set to 1 
+    // At end of loop set to 1
     // to ensure progress bar always disappears upon completion
     setState(() {
       commentaryFetchingProgress = 1;
     });
   }
 
+  // getCommentaryChapterData helper function
   Future<List<dynamic>?> getCommentaryChapterData(
-    String translation,
-    String bookID,
-    int chapter,
+    String commentaryID, // commentary ID to fetch
+    String bookID, // bible ID to fetch
+    int chapter, // chapter to fetch
   ) async {
     try {
-      // print('$bookID $chapter');
       String fetchURL =
-          'https://bible.helloao.org/api/c/$translation/$bookID/$chapter.json';
+          'https://bible.helloao.org/api/c/$commentaryID/$bookID/$chapter.json';
       // Get response and assign variables accordingly
       http.Response response = await http.get(Uri.parse(fetchURL));
       if (response.statusCode != 200) {
-        print('error');
+        // Catch error and alert user
+        alertDialog(
+          context.mounted ? context : context,
+          'No internet or some other error.',
+          'Return status code: ${response.statusCode}',
+          'Ok',
+          false,
+        );
       }
+      // Return data once fetched and parsed
       dynamic jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['chapter']['content'];
-      // Adding introduction
-      // if (chapter == 0) {
-
-      // }
-
       return data;
     } catch (e) {
-      print('Error with $bookID $chapter: $e');
-      // rethrow;
+      // Null is return when no commentary for a chapter is given
+      // print('Error with $bookID $chapter: $e');
       return null;
     }
   }
 
+  // Init prefs on startup
   @override
   void initState() {
     super.initState();
