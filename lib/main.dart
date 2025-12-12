@@ -208,9 +208,11 @@ class _HomePageState extends State<HomePage> {
       http.Response response = await http.get(Uri.parse(fetchURL));
 
       if (response.statusCode == 200) {
+        // Get list of books to get other details
         dynamic jsonResponse = jsonDecode(response.body);
         List<dynamic> listOfBooks = jsonResponse['books'];
 
+        // Get book ids to fetch and chapter counts of each
         List<String> bookIDs = listOfBooks
             .map((element) => element['id'].toString())
             .toList();
@@ -223,15 +225,25 @@ class _HomePageState extends State<HomePage> {
             .toList();
         saveValue('chapterNames', chapterNames, prefs);
 
+        // Loop through each book
         for (int b = 0; b < bookIDs.length; b++) {
           List<dynamic> bookData = [];
+          // Loop through each chapter and fetch it and then add it to bibleData map
           for (int c = 0; c < bookChapterCounts[b]; c++) {
             bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
           }
           bibleData[bookIDs[b]] = bookData;
 
-          List<String> bookNotesInit = List.filled(bookData.length, '');
-          notesData[bookIDs[b]] = bookNotesInit;
+          // If notesData is not filled initialize it for current book
+          if (notesData[bookIDs[b]] == null) {
+            List<String> bookNotesInit = List.filled(bookData.length, '');
+            notesData[bookIDs[b]] = bookNotesInit;
+          }
+
+          // If we are on current book
+          // Set chapter widgets
+          // Remove splash screen
+          // and
           if (bookIDs[b] == currentBook) {
             setState(() {
               chapterWidgets = getContentWidgets(
@@ -241,10 +253,12 @@ class _HomePageState extends State<HomePage> {
               );
             });
             FlutterNativeSplash.remove();
-            getCommentaryBooks();
+            if (commentaryData.isEmpty) {
+              getCommentaryBooks();
+            }
           }
           setState(() {
-            bibleFetchingProgress = bibleData.length / bookIDs.length;
+            bibleFetchingProgress = (b + 1) / bookIDs.length;
           });
         }
         setState(() {
@@ -375,15 +389,17 @@ class _HomePageState extends State<HomePage> {
         });
       }
       setState(() {
-        commentaryFetchingProgress =
-            commentaryData.length / currentBookIDs.length;
+        commentaryFetchingProgress = (b + 1) / currentBookIDs.length;
       });
       // print('Got ${bookIDs[b]}');
     }
-
-    if (commentaryData.length != currentBookIDs.length) {
+    setState(() {
       commentaryFetchingProgress = 1;
-    }
+    });
+
+    // if (commentaryData.length != currentBookIDs.length) {
+    //   commentaryFetchingProgress = 1;
+    // }
     // setState(() {
     //   bibleData = bibleData;
     // });
