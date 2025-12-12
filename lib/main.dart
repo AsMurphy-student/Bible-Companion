@@ -516,9 +516,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Title to show current book and chapter
         title: Text(
           "${bibleData.isNotEmpty && chapterNames.isNotEmpty ? chapterNames[bibleData.keys.toList().indexOf(currentBook)] : 'Fetching IDs'} ${currentChapter + 1}",
         ),
+        // About icon button with small description
         actions: [
           IconButton(
             icon: Icon(Icons.info),
@@ -533,10 +535,17 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
+        // This is the area for the progress bars of fetching
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(4.0),
+          preferredSize: Size.fromHeight(
+            // We shrink the height of this area down once fetching is complete
+            bibleFetchingProgress < 1 && commentaryFetchingProgress < 1
+                ? 32.0
+                : 0.0,
+          ),
           child: Column(
             children: [
+              // bible progress bar
               Visibility(
                 visible: bibleFetchingProgress < 1,
                 child: SizedBox(
@@ -545,23 +554,23 @@ class _HomePageState extends State<HomePage> {
                     alignment: AlignmentDirectional.center,
                     children: [
                       LinearProgressIndicator(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(25),
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Theme.of(context).colorScheme.primary,
                         minHeight: 20,
                         value: bibleFetchingProgress,
                       ),
                       Text(
                         'Fetching Rest of Bible Data',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(fontSize: 20),
                       ),
                     ],
                   ),
                 ),
               ),
+              // commentary progress bar
               Visibility(
                 visible: commentaryFetchingProgress < 1,
                 child: SizedBox(
@@ -570,18 +579,17 @@ class _HomePageState extends State<HomePage> {
                     alignment: AlignmentDirectional.center,
                     children: [
                       LinearProgressIndicator(
-                        backgroundColor: Colors.grey,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(25),
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Theme.of(context).colorScheme.primary,
                         minHeight: 20,
                         value: commentaryFetchingProgress,
                       ),
                       Text(
                         'Fetching Rest of Commentary Data',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(fontSize: 20),
                       ),
                     ],
                   ),
@@ -591,8 +599,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      // This drawer is for book selection
       drawer: Drawer(
+        // Semantic label for screen readers
         semanticLabel: "Book Selector",
+        // Tile builder using bible data
         child: ListView.builder(
           itemCount: bibleData.keys.length,
           itemBuilder: (context, index) {
@@ -614,8 +625,11 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+      // This end drawer opens upon selecting a book from the main drawer
       endDrawer: Drawer(
+        // Semantic label for screen readers
         semanticLabel: "Chapter Selector",
+        // Tile builder using bible data
         child: ListView.builder(
           itemCount: bibleData[currentBook]?.length,
           itemBuilder: (context, index) {
@@ -644,7 +658,9 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+      // Used indexed stack with bottom nav screens
       body: IndexedStack(index: currentBottomTab, children: bottomNavScreens),
+      // Bottom navigation bar
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.shifting,
         currentIndex: currentBottomTab,
