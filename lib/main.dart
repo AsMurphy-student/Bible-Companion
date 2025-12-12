@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:biblereader/checklist_notes.dart';
+import 'package:biblereader/functions/saveValue.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/utils/dialogHelper.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'settings.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:archive/archive.dart';
 
+// This is the start of the main app
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
@@ -26,6 +28,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: const HomePage(),
+      // Theme is defined here for both light and dark theme
       theme: ThemeData(
         fontFamily: GoogleFonts.sora().fontFamily,
         useMaterial3: true,
@@ -48,6 +51,7 @@ class MainApp extends StatelessWidget {
           bodySmall: TextStyle(fontSize: 20, color: Colors.white),
         ),
       ),
+      // Disable debug banner
       debugShowCheckedModeBanner: false,
     );
   }
@@ -66,6 +70,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> initPrefs() async {
     prefs = await SharedPreferences.getInstance();
     setState(() {
+      // Init prefs and set variables if stored
       if (prefs.getInt('currentBottomTab') != null) {
         currentBottomTab = prefs.getInt('currentBottomTab')!;
       }
@@ -78,26 +83,33 @@ class _HomePageState extends State<HomePage> {
       if (prefs.getStringList('chapterNames') != null) {
         chapterNames = prefs.getStringList('chapterNames')!;
       }
+      // Init checklist if stored or set default
+      // and set listener to controller
       if (prefs.getString('checklist') != null) {
         checklistController = TextEditingController(
           text: prefs.getString('checklist'),
         );
         checklistController.addListener(
-          () => saveValue('checklist', checklistController.text),
+          () => saveValue('checklist', checklistController.text, prefs),
         );
       } else {
         checklistController = TextEditingController(
           text: '1. Identify exactly what this verse/section is saying.\n2. Where can this teaching apply to today?\n3. Where can this teaching apply to me?',
         );
         checklistController.addListener(
-          () => saveValue('checklist', checklistController.text),
+          () => saveValue('checklist', checklistController.text, prefs),
         );
       }
+      
+      // If we have notes data
+      // decompress it and save it
       if (prefs.getString('notesData') != null) {
+        // Get the string, decompress it, and get it into bytes
         String notesDataString = prefs.getString('notesData')!;
         List<int> compressed = base64.decode(notesDataString);
         List<int> bytes = GZipDecoder().decodeBytes(compressed);
         try {
+          // Then decode the bytes into json then cast it into List<String>
           Map<String, dynamic> loadedNotesData = jsonDecode(utf8.decode(bytes));
           Map<String, List<String>> parsedNotesData = Map.from(
             loadedNotesData.map(
@@ -107,7 +119,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           );
-          // print('working');
+          // Once casted set to global variable
+          // and set current notes into text field
           setState(() {
             notesData = parsedNotesData;
             notesController = TextEditingController(
@@ -115,17 +128,28 @@ class _HomePageState extends State<HomePage> {
             );
           });
         } catch (e) {
-          print('Error decoding JSON: $e');
+          alertDialog(
+            context,
+            'Error decoding Json for notes data.',
+            '$e',
+            'Ok',
+            false,
+          );
         }
       }
 
+      // Regardless of if there is stored notes data
+      // Set the listener for the notes controller
       notesController.addListener(() {
         notesData[currentBook]?[currentChapter] = notesController.text;
         List<int> notesBytes = utf8.encode(json.encode(notesData));
         List<int> notesCompressed = GZipEncoder().encode(notesBytes);
-        saveValue('notesData', base64.encode(notesCompressed));
+        saveValue('notesData', base64.encode(notesCompressed), prefs);
       });
 
+      // If we have bible data
+      // Decompress it and save it
+      // then get chapter widgets with it
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
@@ -150,66 +174,33 @@ class _HomePageState extends State<HomePage> {
           });
           getCommentaryBooks();
         } catch (e) {
-          print('Error decoding JSON: $e');
+          alertDialog(
+            context,
+            'Error decoding Json for bible data.',
+            '$e',
+            'Ok',
+            false,
+          );
         }
 
+        // Remove splash screen once stored bible data is processed
         FlutterNativeSplash.remove();
       } else {
-        print('getting books');
+        // Fetch bible data if none is stored
         getBooks();
       }
     });
-    // print('getting books');
-    // await getBooks();
-    // print('got books');
-    // chapterWidgets = getContentWidgets(
-    //   bibleData[currentBook]?[currentChapter],
-    //   context.mounted ? context : context,
-    // );
-    // print('set chapter widgets');
-    // FlutterNativeSplash.remove();
   }
 
-  Future<void> saveValue(String key, dynamic value) async {
-    if (value is String) {
-      await prefs.setString(key, value);
-    } else if (value is int) {
-      await prefs.setInt(key, value);
-    } else if (value is List<String>) {
-      await prefs.setStringList(key, value);
-    }
-  }
-
-  // This function checks internet connection with a lookup
-  // This is the only piece of code that I have copied
-  // Is is from here:
-  // https://stackoverflow.com/questions/72791951/error-unsupported-operation-internetaddress-lookup-flutter-web
-  // Future<bool> _hasNetworkMobile(String knownUrl) async {
-  //   try {
-  //     final result = await InternetAddress.lookup(knownUrl);
-  //     return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-  //   } on SocketException catch (_) {}
-  //   return false;
-  // }
-
-  // Future<bool> _hasNetworkWeb(String knownUrl) async {
-  //   try {
-  //     final result = await http.get(Uri.parse(knownUrl));
-  //     if (result.statusCode == 200) return true;
-  //   } on SocketException catch (_) {}
-  //   return false;
-  // }
-
+  // This function is called to fetch and store all bible data
   Future<void> getBooks() async {
-    // if (await _hasNetworkMobile('https://bible.helloao.org/')) {
-    //   FlutterNativeSplash.remove();
-    //   noInternetAlert(context);
-    //   return;
-    // }
     setState(() {
+      // Set fetching progress variable for the progress bar to 0
       bibleFetchingProgress = 0;
     });
+    // get chosen translation or use default
     String translation = prefs.getString('chosenTranslation') ?? "BSB";
+    
     String fetchURL = 'https://bible.helloao.org/api/$translation/books.json';
     try {
       // Get response and assign variables accordingly
@@ -230,7 +221,7 @@ class _HomePageState extends State<HomePage> {
         chapterNames = listOfBooks
             .map((element) => element['name'].toString())
             .toList();
-        saveValue('chapterNames', chapterNames);
+        saveValue('chapterNames', chapterNames, prefs);
 
         for (int b = 0; b < bookIDs.length; b++) {
           List<dynamic> bookData = [];
@@ -264,7 +255,7 @@ class _HomePageState extends State<HomePage> {
         print('got books');
         List<int> bytes = utf8.encode(json.encode(bibleData));
         List<int> compressed = GZipEncoder().encode(bytes);
-        saveValue('bibleData', base64.encode(compressed));
+        saveValue('bibleData', base64.encode(compressed), prefs);
         print('saved bible');
         chapterWidgets = getContentWidgets(
           bibleData[currentBook]?[currentChapter],
@@ -277,7 +268,7 @@ class _HomePageState extends State<HomePage> {
         if (prefs.getString('notesData') == null) {
           List<int> notesBytes = utf8.encode(json.encode(notesData));
           List<int> notesCompressed = GZipEncoder().encode(notesBytes);
-          saveValue('notesData', base64.encode(notesCompressed));
+          saveValue('notesData', base64.encode(notesCompressed), prefs);
         }
       } else {
         print("Theres a problem: ${response.statusCode}");
@@ -587,7 +578,7 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 setState(() {
                   currentBook = bibleData.keys.elementAt(index);
-                  saveValue('currentBook', bibleData.keys.elementAt(index));
+                  saveValue('currentBook', bibleData.keys.elementAt(index), prefs);
                   Navigator.pop(context);
                   Scaffold.of(context).openEndDrawer();
                 });
@@ -606,7 +597,7 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 setState(() {
                   currentChapter = index;
-                  saveValue('currentChapter', currentChapter);
+                  saveValue('currentChapter', currentChapter, prefs);
                   chapterWidgets = getContentWidgets(
                     bibleData[currentBook]?[currentChapter],
                     context,
@@ -660,7 +651,7 @@ class _HomePageState extends State<HomePage> {
         onTap: (value) {
           setState(() {
             currentBottomTab = value;
-            saveValue('currentBottomTab', value);
+            saveValue('currentBottomTab', value, prefs);
           });
         },
       ),
