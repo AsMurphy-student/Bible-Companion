@@ -243,7 +243,7 @@ class _HomePageState extends State<HomePage> {
           // If we are on current book
           // Set chapter widgets
           // Remove splash screen
-          // and
+          // and if commentary is not filled fetch it
           if (bookIDs[b] == currentBook) {
             setState(() {
               chapterWidgets = getContentWidgets(
@@ -257,13 +257,16 @@ class _HomePageState extends State<HomePage> {
               getCommentaryBooks();
             }
           }
+          // Set state of fetching progress each completion
           setState(() {
             bibleFetchingProgress = (b + 1) / bookIDs.length;
           });
         }
+        // When bible data is fully fetch reassign it to update state
         setState(() {
           bibleData = bibleData;
         });
+        // Save bible data to prefs
         List<int> bytes = utf8.encode(json.encode(bibleData));
         List<int> compressed = GZipEncoder().encode(bytes);
         saveValue('bibleData', base64.encode(compressed), prefs);
@@ -272,26 +275,30 @@ class _HomePageState extends State<HomePage> {
           context.mounted ? context : context,
           true,
         );
+        // Remove splash screen if for whatever reason it has not been already
         FlutterNativeSplash.remove();
 
+        // If notes data is not saved, save it
         if (prefs.getString('notesData') == null) {
           List<int> notesBytes = utf8.encode(json.encode(notesData));
           List<int> notesCompressed = GZipEncoder().encode(notesBytes);
           saveValue('notesData', base64.encode(notesCompressed), prefs);
         }
+        // Alert Dialog to catch different status code
       } else {
         alertDialog(
-          context,
+          context.mounted ? context : context,
           'No internet or some other error.',
           'Return status code: ${response.statusCode}',
           'Ok',
           false,
         );
       }
+      // Alert Dialog to catch different status code
     } catch (e) {
       FlutterNativeSplash.remove();
       alertDialog(
-        context,
+        context.mounted ? context : context,
         'No internet or some other error.',
         'No internet is present unable to fetch data.',
         'Exit App',
@@ -312,7 +319,7 @@ class _HomePageState extends State<HomePage> {
       http.Response response = await http.get(Uri.parse(fetchURL));
       if (response.statusCode != 200) {
         alertDialog(
-          context,
+          context.mounted ? context : context,
           'No internet or some other error.',
           'Return status code: ${response.statusCode}',
           'Ok',
@@ -325,7 +332,7 @@ class _HomePageState extends State<HomePage> {
       return data;
     } catch (e) {
       alertDialog(
-        context,
+        context.mounted ? context : context,
         'No internet or some other error.',
         'Error Message: $e',
         'Ok',
