@@ -56,7 +56,14 @@ class _CommentarydropdownState extends State<Commentarydropdown> {
               .toList();
         });
       } else {
-        print("Theres a problem: ${response.statusCode}");
+        // Alert dialogs to catch errors from api
+        alertDialog(
+          context,
+          'No internet or some other error.',
+          'Return status code: ${response.statusCode}',
+          'Ok',
+          false,
+        );
       }
     } catch (e) {
       alertDialog(
@@ -69,6 +76,7 @@ class _CommentarydropdownState extends State<Commentarydropdown> {
     }
   }
 
+  // Init prefs and populate commentary dropdown
   @override
   void initState() {
     super.initState();

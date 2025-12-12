@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+// This is a dialog helper function
+// which create a simple dialog
 void alertDialog(
-  BuildContext context,
-  String title,
-  String message,
-  String buttonMessage,
-  bool forceExit,
+  BuildContext context, // Buildcontext
+  String title, // Title of the dialog
+  String message, // message under the dialog
+  String buttonMessage, // button message/text
+  bool forceExit, // bool of whether to force exit app or not
 ) {
   showDialog(
     context: context,
@@ -17,7 +19,7 @@ void alertDialog(
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Closes the dialog
+              Navigator.pop(context);
               if (forceExit) {
                 SystemChannels.platform.invokeMethod('SystemNavigator.pop');
               }
