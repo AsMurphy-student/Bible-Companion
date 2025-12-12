@@ -94,13 +94,14 @@ class _HomePageState extends State<HomePage> {
         );
       } else {
         checklistController = TextEditingController(
-          text: '1. Identify exactly what this verse/section is saying.\n2. Where can this teaching apply to today?\n3. Where can this teaching apply to me?',
+          text:
+              '1. Identify exactly what this verse/section is saying.\n2. Where can this teaching apply to today?\n3. Where can this teaching apply to me?',
         );
         checklistController.addListener(
           () => saveValue('checklist', checklistController.text, prefs),
         );
       }
-      
+
       // If we have notes data
       // decompress it and save it
       if (prefs.getString('notesData') != null) {
@@ -200,20 +201,19 @@ class _HomePageState extends State<HomePage> {
     });
     // get chosen translation or use default
     String translation = prefs.getString('chosenTranslation') ?? "BSB";
-    
+
     String fetchURL = 'https://bible.helloao.org/api/$translation/books.json';
     try {
       // Get response and assign variables accordingly
-      var response = await http.get(Uri.parse(fetchURL));
+      http.Response response = await http.get(Uri.parse(fetchURL));
 
       if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
+        dynamic jsonResponse = jsonDecode(response.body);
         List<dynamic> listOfBooks = jsonResponse['books'];
 
         List<String> bookIDs = listOfBooks
             .map((element) => element['id'].toString())
             .toList();
-        print(bookIDs);
         currentBookIDs = bookIDs;
         List<int> bookChapterCounts = listOfBooks
             .map((element) => int.parse(element['numberOfChapters'].toString()))
@@ -233,7 +233,6 @@ class _HomePageState extends State<HomePage> {
           List<String> bookNotesInit = List.filled(bookData.length, '');
           notesData[bookIDs[b]] = bookNotesInit;
           if (bookIDs[b] == currentBook) {
-            print('remove splash');
             setState(() {
               chapterWidgets = getContentWidgets(
                 bibleData[currentBook]?[currentChapter],
@@ -247,22 +246,18 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             bibleFetchingProgress = bibleData.length / bookIDs.length;
           });
-          // print('Got ${bookIDs[b]}');
         }
         setState(() {
           bibleData = bibleData;
         });
-        print('got books');
         List<int> bytes = utf8.encode(json.encode(bibleData));
         List<int> compressed = GZipEncoder().encode(bytes);
         saveValue('bibleData', base64.encode(compressed), prefs);
-        print('saved bible');
         chapterWidgets = getContentWidgets(
           bibleData[currentBook]?[currentChapter],
           context.mounted ? context : context,
           true,
         );
-        print('set chapter widgets');
         FlutterNativeSplash.remove();
 
         if (prefs.getString('notesData') == null) {
@@ -271,7 +266,13 @@ class _HomePageState extends State<HomePage> {
           saveValue('notesData', base64.encode(notesCompressed), prefs);
         }
       } else {
-        print("Theres a problem: ${response.statusCode}");
+        alertDialog(
+          context,
+          'No internet or some other error.',
+          'Return status code: ${response.statusCode}',
+          'Ok',
+          false,
+        );
       }
     } catch (e) {
       FlutterNativeSplash.remove();
@@ -294,16 +295,28 @@ class _HomePageState extends State<HomePage> {
       String fetchURL =
           'https://bible.helloao.org/api/$translation/$bookID/$chapter.json';
       // Get response and assign variables accordingly
-      var response = await http.get(Uri.parse(fetchURL));
+      http.Response response = await http.get(Uri.parse(fetchURL));
       if (response.statusCode != 200) {
-        print('error');
+        alertDialog(
+          context,
+          'No internet or some other error.',
+          'Return status code: ${response.statusCode}',
+          'Ok',
+          false,
+        );
       }
-      var jsonResponse = jsonDecode(response.body);
+      dynamic jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['chapter']['content'];
 
       return data;
     } catch (e) {
-      print('Error: $e');
+      alertDialog(
+        context,
+        'No internet or some other error.',
+        'Error Message: $e',
+        'Ok',
+        false,
+      );
       rethrow;
     }
   }
@@ -317,105 +330,74 @@ class _HomePageState extends State<HomePage> {
     });
     String commentaryTranslationID =
         prefs.getString('chosenCommentary') ?? "jamieson-fausset-brown";
-    String fetchURL =
-        'https://bible.helloao.org/api/c/$commentaryTranslationID/books.json';
-    var response;
-    try {
+    for (int b = 0; b < currentBookIDs.length; b++) {
+      List<dynamic> bookData = [];
+
+      String fetchURL =
+          'https://bible.helloao.org/api/c/$commentaryTranslationID/${currentBookIDs[b]}/${1}.json';
       // Get response and assign variables accordingly
-      response = await http.get(Uri.parse(fetchURL));
-    } catch (e) {
-      FlutterNativeSplash.remove();
-      alertDialog(
-        context,
-        'No internet or some other error while fetching commentary data.',
-        'Commentary data will not be available and app will need to be restarted to fetch. Error: $e',
-        'Ok',
-        false,
+      http.Response response = await http.get(Uri.parse(fetchURL));
+
+      if (response.statusCode != 200) {
+        print('error');
+      }
+      dynamic jsonResponse;
+      try {
+        jsonResponse = jsonDecode(response.body);
+      } catch (e) {
+        print("Error no book: ${currentBookIDs[b]} Error: $e");
+        continue;
+      }
+      int numberOfChapters = int.parse(
+        jsonResponse['book']['numberOfChapters'].toString(),
       );
-      setState(() {
-        commentaryFetchingProgress = 1;
-      });
-    }
+      // print("${currentBookIDs[b]} $numberOfChapters chapters");
 
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      List<dynamic> listOfBooks = jsonResponse['books'];
-
-      // List<int> bookChapterCounts = listOfBooks
-      //     .map((element) => int.parse(element['numberOfChapters'].toString()))
-      //     .toList();
-
-      for (int b = 0; b < currentBookIDs.length; b++) {
-        List<dynamic> bookData = [];
-
-        String fetchURL =
-            'https://bible.helloao.org/api/c/$commentaryTranslationID/${currentBookIDs[b]}/${1}.json';
-        // Get response and assign variables accordingly
-        var response = await http.get(Uri.parse(fetchURL));
-
-        if (response.statusCode != 200) {
-          print('error');
-        }
-        var jsonResponse;
-        try {
-          jsonResponse = jsonDecode(response.body);
-        } catch (e) {
-          print("Error no book: ${currentBookIDs[b]} Error: $e");
-          continue;
-        }
-        int numberOfChapters = int.parse(
-          jsonResponse['book']['numberOfChapters'].toString(),
+      for (int c = 0; c < numberOfChapters; c++) {
+        // print("${currentBookIDs[b]} ${c + 1}");
+        bookData.add(
+          await getCommentaryChapterData(
+            commentaryTranslationID,
+            currentBookIDs[b],
+            c + 1,
+          ),
         );
-        // print("${currentBookIDs[b]} $numberOfChapters chapters");
-
-        for (int c = 0; c < numberOfChapters; c++) {
-          // print("${currentBookIDs[b]} ${c + 1}");
-          bookData.add(
-            await getCommentaryChapterData(
-              commentaryTranslationID,
-              currentBookIDs[b],
-              c + 1,
-            ),
-          );
-        }
-        commentaryData[currentBookIDs[b]] = bookData;
-        if (currentBookIDs[b] == currentBook) {
-          // print(commentaryData[currentBook]?[currentChapter]);
-          setState(() {
-            commentaryWidgets = getContentWidgets(
-              commentaryData[currentBook]?[currentChapter],
-              context.mounted ? context : context,
-              false,
-            );
-          });
-        }
+      }
+      commentaryData[currentBookIDs[b]] = bookData;
+      if (currentBookIDs[b] == currentBook) {
+        // print(commentaryData[currentBook]?[currentChapter]);
         setState(() {
-          commentaryFetchingProgress =
-              commentaryData.length / currentBookIDs.length;
+          commentaryWidgets = getContentWidgets(
+            commentaryData[currentBook]?[currentChapter],
+            context.mounted ? context : context,
+            false,
+          );
         });
-        // print('Got ${bookIDs[b]}');
       }
-
-      if (commentaryData.length != currentBookIDs.length) {
-        commentaryFetchingProgress = 1;
-      }
-      // setState(() {
-      //   bibleData = bibleData;
-      // });
-      // print('got books');
-      // List<int> bytes = utf8.encode(json.encode(bibleData));
-      // List<int> compressed = GZipEncoder().encode(bytes);
-      // saveValue('bibleData', base64.encode(compressed));
-      // print('saved bible');
-      // chapterWidgets = getContentWidgets(
-      //   bibleData[currentBook]?[currentChapter],
-      //   context.mounted ? context : context,
-      // );
-      // print('set chapter widgets');
-      // FlutterNativeSplash.remove();
-    } else {
-      print("Theres a problem: ${response.statusCode}");
+      setState(() {
+        commentaryFetchingProgress =
+            commentaryData.length / currentBookIDs.length;
+      });
+      // print('Got ${bookIDs[b]}');
     }
+
+    if (commentaryData.length != currentBookIDs.length) {
+      commentaryFetchingProgress = 1;
+    }
+    // setState(() {
+    //   bibleData = bibleData;
+    // });
+    // print('got books');
+    // List<int> bytes = utf8.encode(json.encode(bibleData));
+    // List<int> compressed = GZipEncoder().encode(bytes);
+    // saveValue('bibleData', base64.encode(compressed));
+    // print('saved bible');
+    // chapterWidgets = getContentWidgets(
+    //   bibleData[currentBook]?[currentChapter],
+    //   context.mounted ? context : context,
+    // );
+    // print('set chapter widgets');
+    // FlutterNativeSplash.remove();
     // print(commentaryData);
   }
 
@@ -429,11 +411,11 @@ class _HomePageState extends State<HomePage> {
       String fetchURL =
           'https://bible.helloao.org/api/c/$translation/$bookID/$chapter.json';
       // Get response and assign variables accordingly
-      var response = await http.get(Uri.parse(fetchURL));
+      http.Response response = await http.get(Uri.parse(fetchURL));
       if (response.statusCode != 200) {
         print('error');
       }
-      var jsonResponse = jsonDecode(response.body);
+      dynamic jsonResponse = jsonDecode(response.body);
       List<dynamic> data = jsonResponse['chapter']['content'];
       // Adding introduction
       // if (chapter == 0) {
@@ -502,7 +484,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               alertDialog(
                 context,
-                'About App',
+                'About Bible Companion',
                 'This is a Bible App which utilizes the Free Bible API. It features the Bible with Commentary, along with notes and a reflection checklist that is configurable.',
                 'Ok',
                 false,
@@ -578,7 +560,11 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 setState(() {
                   currentBook = bibleData.keys.elementAt(index);
-                  saveValue('currentBook', bibleData.keys.elementAt(index), prefs);
+                  saveValue(
+                    'currentBook',
+                    bibleData.keys.elementAt(index),
+                    prefs,
+                  );
                   Navigator.pop(context);
                   Scaffold.of(context).openEndDrawer();
                 });
