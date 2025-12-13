@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:biblereader/checklist_notes.dart';
+import 'package:biblereader/functions/dataFunctions/get_chapter_data.dart';
+import 'package:biblereader/functions/dataFunctions/get_commentary_chapter_data.dart';
 import 'package:biblereader/functions/saveValue.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/utils/dialogHelper.dart';
@@ -230,7 +232,14 @@ class _HomePageState extends State<HomePage> {
           List<dynamic> bookData = [];
           // Loop through each chapter and fetch it and then add it to bibleData map
           for (int c = 0; c < bookChapterCounts[b]; c++) {
-            bookData.add(await getChapterData(translation, bookIDs[b], c + 1));
+            bookData.add(
+              await getChapterData(
+                translation,
+                bookIDs[b],
+                c + 1,
+                context.mounted ? context : context,
+              ),
+            );
           }
           bibleData[bookIDs[b]] = bookData;
 
@@ -307,46 +316,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Helper function to fetch specific chapter data
-  Future<List<dynamic>> getChapterData(
-    String translation, // Translation code
-    String bookID, // BookID to fetch
-    int chapter, // Specific chapter to query
-  ) async {
-    try {
-      String fetchURL =
-          'https://bible.helloao.org/api/$translation/$bookID/$chapter.json';
-      // Get response and assign variables accordingly
-      http.Response response = await http.get(Uri.parse(fetchURL));
-      if (response.statusCode != 200) {
-        // Catch error and alert user
-        alertDialog(
-          context.mounted ? context : context,
-          'No internet or some other error.',
-          'Return status code: ${response.statusCode}',
-          'Ok',
-          false,
-        );
-      }
-      // Get data and return it
-      dynamic jsonResponse = jsonDecode(response.body);
-      List<dynamic> data = jsonResponse['chapter']['content'];
-      return data;
-    } catch (e) {
-      // Catch error and alert user as this will stop runtime
-      // This error should most likely never happen
-      alertDialog(
-        context.mounted ? context : context,
-        'No internet or some other error.',
-        'Error Message: $e',
-        'Ok',
-        false,
-      );
-      // Rethrow needed for compiling
-      rethrow;
-    }
-  }
-
   // getCommentaryBooks function which fetchs commentary data
   Future<void> getCommentaryBooks() async {
     // If currentBookIDs of current translation is not set, set it
@@ -399,6 +368,7 @@ class _HomePageState extends State<HomePage> {
             commentaryTranslationID,
             currentBookIDs[b],
             c + 1,
+            context.mounted ? context : context,
           ),
         );
       }
@@ -425,38 +395,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       commentaryFetchingProgress = 1;
     });
-  }
-
-  // getCommentaryChapterData helper function
-  Future<List<dynamic>?> getCommentaryChapterData(
-    String commentaryID, // commentary ID to fetch
-    String bookID, // bible ID to fetch
-    int chapter, // chapter to fetch
-  ) async {
-    try {
-      String fetchURL =
-          'https://bible.helloao.org/api/c/$commentaryID/$bookID/$chapter.json';
-      // Get response and assign variables accordingly
-      http.Response response = await http.get(Uri.parse(fetchURL));
-      if (response.statusCode != 200) {
-        // Catch error and alert user
-        alertDialog(
-          context.mounted ? context : context,
-          'No internet or some other error.',
-          'Return status code: ${response.statusCode}',
-          'Ok',
-          false,
-        );
-      }
-      // Return data once fetched and parsed
-      dynamic jsonResponse = jsonDecode(response.body);
-      List<dynamic> data = jsonResponse['chapter']['content'];
-      return data;
-    } catch (e) {
-      // Null is return when no commentary for a chapter is given
-      // print('Error with $bookID $chapter: $e');
-      return null;
-    }
   }
 
   // Init prefs on startup
