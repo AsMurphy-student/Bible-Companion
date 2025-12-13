@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:biblereader/checklist_notes.dart';
-import 'package:biblereader/functions/dataFunctions/get_chapter_data.dart';
-import 'package:biblereader/functions/dataFunctions/get_commentary_chapter_data.dart';
+import 'package:biblereader/functions/chapterFetching/get_chapter_data.dart';
+import 'package:biblereader/functions/chapterFetching/get_commentary_chapter_data.dart';
 import 'package:biblereader/functions/saveValue.dart';
 import 'package:biblereader/functions/verses.dart';
 import 'package:biblereader/utils/dialogHelper.dart';
@@ -196,6 +196,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // This function is called to fetch and store all bible data
+  // Wanted to export this but setstate is used within it which makes it hard to refactor
   Future<void> getBooks() async {
     setState(() {
       // Set fetching progress variable for the progress bar to 0
@@ -317,6 +318,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // getCommentaryBooks function which fetchs commentary data
+  // Wanted to export this but setstate is used within it which makes it hard to refactor
   Future<void> getCommentaryBooks() async {
     // If currentBookIDs of current translation is not set, set it
     if (currentBookIDs.isEmpty) {
