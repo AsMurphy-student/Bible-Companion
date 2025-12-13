@@ -108,6 +108,7 @@ class _HomePageState extends State<HomePage> {
       // decompress it and save it
       if (prefs.getString('notesData') != null) {
         // Get the string, decompress it, and get it into bytes
+        // Figured out from: https://stackoverflow.com/questions/39735145/how-to-compress-a-string-using-gzip-or-similar-in-dart
         String notesDataString = prefs.getString('notesData')!;
         List<int> compressed = base64.decode(notesDataString);
         List<int> bytes = GZipDecoder().decodeBytes(compressed);
@@ -143,6 +144,7 @@ class _HomePageState extends State<HomePage> {
 
       // Regardless of if there is stored notes data
       // Set the listener for the notes controller
+      // Figured out from: https://stackoverflow.com/questions/39735145/how-to-compress-a-string-using-gzip-or-similar-in-dart
       notesController.addListener(() {
         notesData[currentBook]?[currentChapter] = notesController.text;
         List<int> notesBytes = utf8.encode(json.encode(notesData));
@@ -153,6 +155,7 @@ class _HomePageState extends State<HomePage> {
       // If we have bible data
       // Decompress it and save it
       // then get chapter widgets with it
+      // Figured out from: https://stackoverflow.com/questions/39735145/how-to-compress-a-string-using-gzip-or-similar-in-dart
       if (prefs.getString('bibleData') != null) {
         String bibleDataString = prefs.getString('bibleData')!;
         List<int> compressed = base64.decode(bibleDataString);
@@ -277,6 +280,7 @@ class _HomePageState extends State<HomePage> {
           bibleData = bibleData;
         });
         // Save bible data to prefs
+        // Figured out from: https://stackoverflow.com/questions/39735145/how-to-compress-a-string-using-gzip-or-similar-in-dart
         List<int> bytes = utf8.encode(json.encode(bibleData));
         List<int> compressed = GZipEncoder().encode(bytes);
         saveValue('bibleData', base64.encode(compressed), prefs);
@@ -289,6 +293,7 @@ class _HomePageState extends State<HomePage> {
         FlutterNativeSplash.remove();
 
         // If notes data is not saved, save it
+        // Figured out from: https://stackoverflow.com/questions/39735145/how-to-compress-a-string-using-gzip-or-similar-in-dart
         if (prefs.getString('notesData') == null) {
           List<int> notesBytes = utf8.encode(json.encode(notesData));
           List<int> notesCompressed = GZipEncoder().encode(notesBytes);
